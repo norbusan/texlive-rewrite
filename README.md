@@ -1,7 +1,20 @@
-Rewrite of the core TeX management scripts in perl
-==================================================
+texlive-rewrite
+===============
 
-Aims:
+Some of the core scripts of TeX Live are still written in shell, taken from Thomas Esser's teTeX.
+Since we would like to have the same scripts used on all supported platforms, that includes Windows,
+we are planning to rewrite these scripts in perl or texlua.
+
+Currently only updmap has been rewritten (and extended), but we want to do the same with mktexlsr
+and fmtutils, as well as the depending scripts.
+
+Contributions are welcome.
+Rewrite of some core scripts in TeX Live from shell to perl
+
+Aims
+----
+
+Our aims are:
 - use the same scripts on all platforms, not separate implementations
 - make each program available as perl function / module and cmd line prog
 - separate out the necessary common functions into one file 
@@ -11,26 +24,25 @@ Aims:
 
 Scripts involved:
 - main scripts (with cmd line interface)
-	mktexlsr
-	fmtutil
-	updmap (partially done)
-	texconfig (via wrapper for tlmgr?)
+        mktexlsr
+        fmtutil
+        updmap (partially done)
+        texconfig (via wrapper for tlmgr?)
 - supporting scripts in texmf-dist/web2c/
-	mktex.opt	(a script!)
-	mktexdir(.opt)
-	mktexnam(.opt)
-	mktexupd
+        mktex.opt       (a script!)
+        mktexdir(.opt)
+        mktexnam(.opt)
+        mktexupd
 - supporting scripts in texmf-dist/texconfig/
-	tcfmgr
+        tcfmgr
 - supporting scripts in texmf-dist/scripts/texlive/
-	kpsetool.sh
-	kpsewhere.sh
-	texlinks.sh
-
+        kpsetool.sh
+        kpsewhere.sh
+        texlinks.sh
 
 
 mktexlsr/mktexupd
-=================
+-----------------
 
 help output
 -----------
@@ -39,6 +51,7 @@ DIRS are given, these are used as the directories in which to build
 ls-R. Else all directories in the search path for ls-R files
 ($TEXMFDBS) are used.
 
+~~~~~
 Options:
   --dry-run  do not actually update anything
   --help     display this help and exit 
@@ -46,6 +59,7 @@ Options:
   --silent   same as --quiet
   --verbose  explain what is being done
   --version  output version information and exit
+~~~~~
 	      
 If standard input is a terminal, --verbose is on by default.
 
