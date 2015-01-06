@@ -12,6 +12,13 @@
 use strict;
 $^W = 1;
 
+my $ismain;
+
+BEGIN {
+  $^W = 1;
+  $ismain = (__FILE__ eq $0);
+}
+
 # for future inclusion in TeX Live svn:
 my $svnid = '$Id:$';
 my $lastchdate = '$Date:$';
@@ -24,8 +31,11 @@ my $version = "svn$svnrev ($lastchdate)";
 
 use Getopt::Long qw(:config no_autoabbrev ignore_case_always);
 use Cwd;
+use File::Spec;
 use File::Find;
 use File::Basename;
+use Data::Dumper;
+$Data::Dumper::Indent = 1;
 
 my $opt_dryrun = 0;
 my $opt_help   = 0;
@@ -41,7 +51,128 @@ my $oldlsrmagic =
   '% ls-R -- maintained by MakeTeXls-R; do not change this line.';
 
 
-&main();
+&main() if $ismain;
+
+package TeX::LSR;
+
+sub new {
+  my $class = shift;
+  my %params = @_;
+  my $self = {
+    root => $params{'root'},
+    filename => '',           # to accomodated both ls-r and ls-R
+    is_loaded => 0,
+    tree => { }
+  };
+  bless $self, $class;
+  return $self;
+}
+
+# returns 1 on success, 0 on failure
+sub loadtree {
+  my $self = shift;
+  return 0 if (!defined($self->{'root'}));
+  return 0 if (! -d $self->{'root'});
+  my $tree;
+  build_tree($tree, $self->{'root'});
+  $self->{'tree'} = $tree->{$self->{'root'}};
+  #
+  # crazy code from 
+  # http://www.perlmonks.org/?node=How%20to%20map%20a%20directory%20tree%20to%20a%20perl%20hash%20tree
+  {
+    sub build_tree {
+      my $node = $_[0] = {};
+      my @s;
+      File::Find::find( sub {
+        $node = (pop @s)->[1] while @s and $File::Find::dir ne $s[-1][0];
+        return $node->{$_} = -s if -f;
+        push @s, [ $File::Find::name, $node ];
+        $node = $node->{$_} = {};
+      }, $_[1]);
+      $_[0]{$_[1]} = delete $_[0]{'.'};
+    }
+  }
+  $self->{'is_loaded'} = 1;
+  # find({ wanted => sub { } , preprocess => \&dir_preprocess }, $t);
+  return 1;
+}
+
+sub setup_filename {
+  my $self = shift;
+  if (!$self->{'filename'}) {
+    if (-r $self->{'root'} . "/ls-R") {
+      $self->{'filename'} = 'ls-R';
+    } elsif (-r $self->{'root'} . "/ls-r") {
+      $self->{'filename'} = 'ls-r';
+    } else {
+      $self->{'filename'} = 'ls-R';
+    }
+  }
+  return 1;
+}
+
+sub loadfile {
+  my $self = shift;
+  return 0 if (!defined($self->{'root'}));
+  return 0 if (! -d $self->{'root'});
+  $self->setup_filename();
+  my $lsrfile = File::Spec->catfile($self->{'root'},$self->{'filename'});
+  return 0 if (! -r $lsrfile);
+  open FOO, "<", $lsrfile || die ("$prg: really readable $lsrfile: $?");
+  # check first line for the magic header
+  chomp (my $fl = <FOO>);
+  if (($fl eq $lsrmagic) or ($fl eq $oldlsrmagic)) {
+    my %tree;
+    my $t;
+    for my $l (<FOO>) {
+      chomp($l);
+      next if ($l =~ m!^\s*$!);
+      next if ($l =~ m!^\./:!);
+      if ($l =~ m!^(.*):!) {
+        $t = \%tree;
+        my @a = split(/\//,$1);
+        for (@a) {
+          $t->{$_} = {} if (!defined($t->{$_}) or ($t->{$_} == 1));
+          $t = $t->{$_};
+        }
+      } else {
+        $t->{$l} = 1;
+      }
+    }
+    $self->{'tree'} = $tree{'.'};
+  }
+  close(FOO);
+  $self->{'is_loaded'} = 1;
+  return 1;
+}
+
+sub write {
+  my $self = shift;
+  if (!defined($self->{'root'})) {
+    printf STDERR "TeX::LSR: root undefined, cannot write out.\n";
+    return 0;
+  }
+  if ($self->{'is_loaded'} == 0) {
+    printf STDERR "TeX::LSR: tree for ", $self->{'root'}, " not loaded, cannot write out!\n";
+    return 0;
+  }
+  $self->setup_filename();
+  if (! -w $self->{'filename'}) {
+    printf STDERR "TeX::LSR: ls-R file at ", $self->{'filename'}, " is not writable, skipping.\n";
+    return 0;
+  }
+  open FOO, ">", $self->{'filename'} ||
+    die "TeX::LSR writable but cannot open?? $?";
+  printf FOO $lsrmagic, "\n";
+  printf FOO "./:\n";  # hardwired ./ for top-level files -- really necessary?
+  TODO TODO TODO 
+
+  return 1;
+}
+
+
+package main;
+
 
 ################
 
@@ -61,8 +192,25 @@ sub main {
   }
 
   for my $t (find_lsr_trees()) {
-    print "\n\n========= $t =============\n\n";
-    create_lsr_file($t);
+    my $lsr = new TeX::LSR(root => $t);
+    if ($lsr->loadtree()) {
+      print "success loading tree from $t\n";
+      print "\n\n========= $t =============\n\n";
+      print Dumper $lsr->{'tree'};
+      # $lsr->write();
+    } else {
+      printf STDERR "$prg: cannot read $t files, skipping!\n";
+    }
+    # only as example how to load a ls-R file
+    # my $lsrfile = new TeX::LSR(root => $t);
+    # if ($lsrfile->loadfile()) {
+    #   print "success loading tree from $t\n";
+    #   print "\n\n========= $t =============\n\n";
+    #   print Dumper $lsrfile->{'tree'};
+    # } else {
+    #   print "bad luck with $t\n";
+    # }
+    #create_lsr_file($t);
   }
 }
 
