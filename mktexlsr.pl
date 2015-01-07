@@ -43,6 +43,7 @@ my $opt_verbose = 1; # TODO should be 0 when not connected to a terminal!
                      # in shell by checking tty -s
 my $opt_version = 0;
 my $opt_output;
+my $opt_sort = 0; # for debugging sort output
 
 (my $prg = basename($0)) =~ s/\.pl$//;
 
@@ -187,12 +188,12 @@ sub write {
       my $n = shift;
       print FOO "$n:\n";
       my @sd;
-      for my $st (keys %$t) {
+      for my $st (($opt_sort ? sort(keys %$t) : keys %$t)) {
         push @sd, $st if (ref($t->{$st}) eq 'HASH');
         print FOO "$st\n";
       }
       print FOO "\n";
-      for my $st (@sd) {
+      for my $st (($opt_sort ? sort @sd : @sd)) {
         do_entry($t->{$st}, "$n/$st");
       }
     }
@@ -211,6 +212,7 @@ sub main {
              "help|h"         => \$opt_help,
              "verbose"        => \$opt_verbose,
              "quiet|q|silent" => sub { $opt_verbose = 0 },
+             "sort"           => \$opt_sort,
              "output|o=s"     => \$opt_output,
              "version|v"      => \$opt_version) or
     die "Try \"$prg --help\" for more information.\n";
