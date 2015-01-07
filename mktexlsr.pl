@@ -34,14 +34,15 @@ use Cwd;
 use File::Spec;
 use File::Find;
 use File::Basename;
-use Data::Dumper;
-$Data::Dumper::Indent = 1;
+#use Data::Dumper;
+#$Data::Dumper::Indent = 1;
 
 my $opt_dryrun = 0;
 my $opt_help   = 0;
 my $opt_verbose = 1; # TODO should be 0 when not connected to a terminal!
                      # in shell by checking tty -s
 my $opt_version = 0;
+my $opt_output;
 
 (my $prg = basename($0)) =~ s/\.pl$//;
 
@@ -52,6 +53,11 @@ my $oldlsrmagic =
 
 
 &main() if $ismain;
+
+
+#
+# usage as module
+#
 
 package TeX::LSR;
 
@@ -85,7 +91,14 @@ sub loadtree {
       my @s;
       File::Find::find( sub {
         $node = (pop @s)->[1] while @s and $File::Find::dir ne $s[-1][0];
-        return $node->{$_} = -s if -f;
+        # ignore VCS
+        return if ($_ eq ".git");
+        return if ($_ eq ".svn");
+        return if ($_ eq ".hg");
+        return if ($_ eq ".bzr");
+        # do NOT follow symlinks and check them
+        # this is a difference to the original mktexlsr implementation
+        return $node->{$_} = 1 if (! -d);
         push @s, [ $File::Find::name, $node ];
         $node = $node->{$_} = {};
       }, $_[1]);
@@ -93,7 +106,6 @@ sub loadtree {
     }
   }
   $self->{'is_loaded'} = 1;
-  # find({ wanted => sub { } , preprocess => \&dir_preprocess }, $t);
   return 1;
 }
 
@@ -147,26 +159,44 @@ sub loadfile {
 }
 
 sub write {
-  my $self = shift;
+  my ($self, $fn) = @_;
   if (!defined($self->{'root'})) {
-    printf STDERR "TeX::LSR: root undefined, cannot write out.\n";
+    print STDERR "TeX::LSR: root undefined, cannot write out.\n";
     return 0;
   }
   if ($self->{'is_loaded'} == 0) {
-    printf STDERR "TeX::LSR: tree for ", $self->{'root'}, " not loaded, cannot write out!\n";
+    print STDERR "TeX::LSR: tree for ", $self->{'root'}, " not loaded, cannot write out!\n";
     return 0;
   }
-  $self->setup_filename();
-  if (! -w $self->{'filename'}) {
-    printf STDERR "TeX::LSR: ls-R file at ", $self->{'filename'}, " is not writable, skipping.\n";
+  if (!defined($fn)) {
+    $self->setup_filename();
+    $fn = $self->{'filename'};
+  }
+  if (-e $fn && ! -w $fn) {
+    print STDERR "TeX::LSR: ls-R file at $fn is not writable, skipping.\n";
     return 0;
   }
-  open FOO, ">", $self->{'filename'} ||
+  open FOO, ">$fn" ||
     die "TeX::LSR writable but cannot open?? $?";
-  printf FOO $lsrmagic, "\n";
-  printf FOO "./:\n";  # hardwired ./ for top-level files -- really necessary?
-  TODO TODO TODO 
-
+  print FOO "$lsrmagic\n\n";
+  print FOO "./:\n";  # hardwired ./ for top-level files -- really necessary?
+  do_entry($self->{'tree'}, ".");
+  {
+    sub do_entry {
+      my $t = shift;
+      my $n = shift;
+      print FOO "$n:\n";
+      my @sd;
+      for my $st (keys %$t) {
+        push @sd, $st if (ref($t->{$st}) eq 'HASH');
+        print FOO "$st\n";
+      }
+      print FOO "\n";
+      for my $st (@sd) {
+        do_entry($t->{$st}, "$n/$st");
+      }
+    }
+  }
   return 1;
 }
 
@@ -181,6 +211,7 @@ sub main {
              "help|h"         => \$opt_help,
              "verbose"        => \$opt_verbose,
              "quiet|q|silent" => sub { $opt_verbose = 0 },
+             "output|o=s"     => \$opt_output,
              "version|v"      => \$opt_version) or
     die "Try \"$prg --help\" for more information.\n";
 
@@ -191,15 +222,22 @@ sub main {
     exit (0);
   }
 
+  if ($opt_output && $#ARGV != 0) {
+    # we only support --output with only one tree as argument
+    print STDERR "$prg: using of --output <file> also requires exactely one tree as argument.";
+    exit (1);
+  }
+
   for my $t (find_lsr_trees()) {
     my $lsr = new TeX::LSR(root => $t);
     if ($lsr->loadtree()) {
-      print "success loading tree from $t\n";
-      print "\n\n========= $t =============\n\n";
-      print Dumper $lsr->{'tree'};
-      # $lsr->write();
+      if ($opt_output) {
+        $lsr->write($opt_output);
+      } else {
+        $lsr->write();
+      }
     } else {
-      printf STDERR "$prg: cannot read $t files, skipping!\n";
+      print STDERR "$prg: cannot read $t files, skipping!\n";
     }
     # only as example how to load a ls-R file
     # my $lsrfile = new TeX::LSR(root => $t);
@@ -210,17 +248,7 @@ sub main {
     # } else {
     #   print "bad luck with $t\n";
     # }
-    #create_lsr_file($t);
   }
-}
-
-sub create_lsr_file {
-  my $t = shift;
-  # TODO find ls-R versus ls-r, use as is, but create ls-R
-  # TODO follow ls-R link
-  print $lsrmagic;
-  print "\n./:";  # hardwired ./ for top-level files -- really necessary?
-  find({ wanted => sub { } , preprocess => \&dir_preprocess }, $t);
 }
 
 sub find_lsr_trees {
@@ -245,6 +273,57 @@ sub find_lsr_trees {
   return sort(keys %lsrs);
 }
 
+sub version {
+  my $ret = sprintf "%s version %s\n", $prg, $version;
+  return $ret;
+}
+
+sub help {
+  my $usage = <<"EOF"
+Usage: $prg [OPTION]... [DIR]...
+
+Rebuild ls-R filename databases used by TeX.  If one or more arguments
+DIRS are given, these are used as the directories in which to build
+ls-R. Else all directories in the search path for ls-R files
+(\$TEXMFDBS) are used.
+
+Options:
+  --dry-run  do not actually update anything
+  --help     display this help and exit 
+  --output NAME
+             if exactly one DIR is given, the ls-R file will be written to NAME
+  --quiet    cancel --verbose
+  --silent   same as --quiet
+  --verbose  explain what is being done
+  --version  output version information and exit
+  
+If standard input is a terminal, --verbose is on by default.
+
+For more information, see the \`Filename database' section of
+Kpathsea manual available at http://tug.org/kpathsea.
+
+Report bugs to: tex-k\@tug.org
+TeX Live home page: <http://tug.org/texlive/>
+
+EOF
+;
+  print &version();
+  print $usage;
+  exit 0;
+}
+
+__END__
+
+HISTORIC STUFF!!!
+
+sub create_lsr_file {
+  my $t = shift;
+  # TODO find ls-R versus ls-r, use as is, but create ls-R
+  # TODO follow ls-R link
+  print $lsrmagic;
+  print "\n./:";  # hardwired ./ for top-level files -- really necessary?
+  find({ wanted => sub { } , preprocess => \&dir_preprocess }, $t);
+}
 
 sub dir_preprocess {
   my $rel = $File::Find::dir;
@@ -266,44 +345,6 @@ sub dir_preprocess {
   }
   return @ds;
 }
-
-sub version {
-  my $ret = sprintf "%s version %s\n", $prg, $version;
-  return $ret;
-}
-
-sub help {
-  my $usage = <<"EOF"
-Usage: $prg [OPTION]... [DIR]...
-
-Rebuild ls-R filename databases used by TeX.  If one or more arguments
-DIRS are given, these are used as the directories in which to build
-ls-R. Else all directories in the search path for ls-R files
-(\$TEXMFDBS) are used.
-
-Options:
-  --dry-run  do not actually update anything
-  --help     display this help and exit 
-  --quiet    cancel --verbose
-  --silent   same as --quiet
-  --verbose  explain what is being done
-  --version  output version information and exit
-  
-If standard input is a terminal, --verbose is on by default.
-
-For more information, see the \`Filename database' section of
-Kpathsea manual available at http://tug.org/kpathsea.
-
-Report bugs to: tex-k\@tug.org
-TeX Live home page: <http://tug.org/texlive/>
-
-EOF
-;
-  print &version();
-  print $usage;
-  exit 0;
-}
-
 
 ### Local Variables:
 ### perl-indent-level: 2
