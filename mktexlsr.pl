@@ -178,7 +178,7 @@ sub write {
   }
   if (!defined($fn)) {
     $self->setup_filename();
-    $fn = $self->{'filename'};
+    $fn = File::Spec->catfile($self->{'root'},$self->{'filename'});
   }
   if (-e $fn && ! -w $fn) {
     print STDERR "TeX::LSR: ls-R file at $fn is not writable, skipping.\n";
@@ -189,6 +189,7 @@ sub write {
   print FOO "$lsrmagic\n\n";
   print FOO "./:\n";  # hardwired ./ for top-level files -- really necessary?
   do_entry($self->{'tree'}, ".", $dosort);
+  close FOO;
   {
     sub do_entry {
       my ($t, $n, $sortit) = @_;
@@ -265,6 +266,7 @@ sub main {
 
   for my $t (find_lsr_trees()) {
     my $lsr = new TeX::LSR(root => $t);
+    print "$prg: Updating $t...\n" if $opt_verbose;
     if ($lsr->loadtree()) {
       if ($opt_output) {
         $lsr->write(filename => $opt_output, sort => $opt_sort);
@@ -275,6 +277,7 @@ sub main {
       print STDERR "$prg: cannot read $t files, skipping!\n";
     }
   }
+  print "$prg: Done.\n" if $opt_verbose;
 }
 
 sub find_lsr_trees {
