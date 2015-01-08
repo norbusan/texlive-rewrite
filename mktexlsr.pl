@@ -44,6 +44,8 @@ my $opt_verbose = 1; # TODO should be 0 when not connected to a terminal!
 my $opt_version = 0;
 my $opt_output;
 my $opt_sort = 0; # for debugging sort output
+my $opt_test = 0; # calls do_tests instead of normal processing
+my $opt_follow = 1; # follow links - check whether they are dirs or not
 
 (my $prg = basename($0)) =~ s/\.pl$//;
 
@@ -84,25 +86,23 @@ sub loadtree {
   build_tree($tree, $self->{'root'});
   $self->{'tree'} = $tree->{$self->{'root'}};
   #
-  # crazy code from 
+  # code adapted from
   # http://www.perlmonks.org/?node=How%20to%20map%20a%20directory%20tree%20to%20a%20perl%20hash%20tree
   {
     sub build_tree {
       my $node = $_[0] = {};
       my @s;
-      File::Find::find( sub {
+      File::Find::find( { follow_fast => $opt_follow, wanted => sub {
         $node = (pop @s)->[1] while @s and $File::Find::dir ne $s[-1][0];
         # ignore VCS
         return if ($_ eq ".git");
         return if ($_ eq ".svn");
         return if ($_ eq ".hg");
         return if ($_ eq ".bzr");
-        # do NOT follow symlinks and check them
-        # this is a difference to the original mktexlsr implementation
         return $node->{$_} = 1 if (! -d);
         push @s, [ $File::Find::name, $node ];
         $node = $node->{$_} = {};
-      }, $_[1]);
+      }}, $_[1]);
       $_[0]{$_[1]} = delete $_[0]{'.'};
     }
   }
@@ -159,6 +159,7 @@ sub loadfile {
   return 1;
 }
 
+
 sub write {
   my ($self, $fn) = @_;
   if (!defined($self->{'root'})) {
@@ -201,6 +202,30 @@ sub write {
   return 1;
 }
 
+sub addfiles {
+  my ($self, @files) = @_;
+  if ($self->{'is_loaded'} == 0) {
+    print STDERR "TeX::LSR: tree for ", $self->{'root'}, " not loaded, cannot add files!\n";
+    return 0;
+  }
+  # WARNING
+  # we don't do any check about the path structure
+  # so if a full path is added, it is added *below* the root
+  # we *could* check if the initial prefix is the same, but I am 
+  # sure whether this is a good idea
+  for my $f (@files) {
+    my $t = $self->{'tree'};
+    my @a = split(/\//,$f);
+    my $fn = pop @a;
+    for (@a) {
+      $t->{$_} = {} if (!defined($t->{$_}) or ($t->{$_} == 1));
+      $t = $t->{$_};
+    }
+    $t->{$fn} = 1;
+  }
+  return 1;
+}
+
 
 package main;
 
@@ -210,10 +235,12 @@ package main;
 sub main {
   GetOptions("dry-run|n"      => \$opt_dryrun,
              "help|h"         => \$opt_help,
-             "verbose"        => \$opt_verbose,
+             "verbose!"       => \$opt_verbose,
              "quiet|q|silent" => sub { $opt_verbose = 0 },
              "sort"           => \$opt_sort,
+             "test"           => \$opt_test,
              "output|o=s"     => \$opt_output,
+             "follow!"        => \$opt_follow,
              "version|v"      => \$opt_version) or
     die "Try \"$prg --help\" for more information.\n";
 
@@ -228,6 +255,11 @@ sub main {
     # we only support --output with only one tree as argument
     print STDERR "$prg: using of --output <file> also requires exactely one tree as argument.";
     exit (1);
+  }
+
+  if ($opt_test) {
+    &do_tests();
+    exit(0);
   }
 
   for my $t (find_lsr_trees()) {
@@ -291,6 +323,7 @@ ls-R. Else all directories in the search path for ls-R files
 
 Options:
   --dry-run  do not actually update anything
+  --nofollow do not follow symlinks (default to follow)
   --help     display this help and exit 
   --output NAME
              if exactly one DIR is given, the ls-R file will be written to NAME
@@ -313,6 +346,45 @@ EOF
   print $usage;
   exit 0;
 }
+
+
+
+sub do_tests {
+  require Data::Dumper;
+  $Data::Dumper::Indent = 1;
+  chomp (my $t = `kpsewhich -var-value TEXMFDIST`);
+  my $lsr = new TeX::LSR(root => $t);
+  if ($lsr->loadtree()) {
+    chomp (my $outi = `mktemp ls-R.test1.XXXXXXXX`);
+    $lsr->write($outi);
+    print "Test 1 : load TEXMFDIST with loadtree, write lsr to $outi\n";
+    chomp ($outi = `mktemp ls-R.test2.XXXXXXXX`);
+    open OUT, ">$outi";
+    print OUT Data::Dumper->Dumper($lsr);
+    close OUT;
+    print "Test 2 : load TEXMFDIST with loadtree, Dumper to $outi\n";
+  } else {
+    print "Cannot loadtree from $t!\n";
+  }
+  $lsr = new TeX::LSR(root => $t);
+  if ($lsr->loadfile()) {
+    chomp (my $outi = `mktemp ls-R.test3.XXXXXXXX`);
+    $lsr->write($outi);
+    print "Test 3 : load TEXMFDIST with loadfile, write lsr to $outi\n";
+    chomp ($outi = `mktemp ls-R.test4.XXXXXXXX`);
+    open OUT, ">$outi";
+    print OUT Data::Dumper->Dumper($lsr);
+    close OUT;
+    print "Test 4 : load TEXMFDIST with loadfile, Dumper to $outi\n";
+    $lsr->addfiles("bibtex/bib/beebe/foobar", "bibtex/bib/emil/detektive", "foo/bar/baz", "brrrrrr");
+    chomp ($outi = `mktemp ls-R.test5.XXXXXXXX`);
+    $lsr->write($outi);
+    print "Test 5 : load TEXMFDIST with loadfile, add file, write lsr to $outi\n";
+  } else {
+    print STDERR "Cannot loadfile from $t!\n";
+  }
+}
+
 
 __END__
 
