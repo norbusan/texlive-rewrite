@@ -12,12 +12,16 @@
 use strict;
 $^W = 1;
 
+package mktexlsr;
+
 my $ismain;
 
 BEGIN {
   $^W = 1;
   $ismain = (__FILE__ eq $0);
 }
+
+
 
 # for future inclusion in TeX Live svn:
 my $svnid = '$Id:$';
@@ -44,7 +48,6 @@ my $opt_verbose = 1; # TODO should be 0 when not connected to a terminal!
 my $opt_version = 0;
 my $opt_output;
 my $opt_sort = 0; # for debugging sort output
-my $opt_test = 0; # calls do_tests instead of normal processing
 my $opt_follow = 1; # follow links - check whether they are dirs or not
 
 (my $prg = basename($0)) =~ s/\.pl$//;
@@ -58,6 +61,7 @@ my $oldlsrmagic =
 &main() if $ismain;
 
 
+#################################################################
 #
 # usage as module
 #
@@ -161,7 +165,13 @@ sub loadfile {
 
 
 sub write {
-  my ($self, $fn) = @_;
+  my $self = shift;
+  my %params = @_;
+  my $fn;
+  my $dosort = 0;
+  $fn = $params{'filename'} if $params{'filename'};
+  $dosort = $params{'sort'};
+  print "DEBUG: write sorting = $dosort\n";
   if (!defined($self->{'root'})) {
     print STDERR "TeX::LSR: root undefined, cannot write out.\n";
     return 0;
@@ -182,19 +192,19 @@ sub write {
     die "TeX::LSR writable but cannot open?? $?";
   print FOO "$lsrmagic\n\n";
   print FOO "./:\n";  # hardwired ./ for top-level files -- really necessary?
-  do_entry($self->{'tree'}, ".");
+  do_entry($self->{'tree'}, ".", $dosort);
   {
     sub do_entry {
-      my $t = shift;
-      my $n = shift;
+      my ($t, $n, $sortit) = @_;
       print FOO "$n:\n";
       my @sd;
-      for my $st (($opt_sort ? sort(keys %$t) : keys %$t)) {
+      for my $st (($sortit ? sort(keys %$t) : keys %$t)) {
         push @sd, $st if (ref($t->{$st}) eq 'HASH');
         print FOO "$st\n";
       }
       print FOO "\n";
-      for my $st (($opt_sort ? sort @sd : @sd)) {
+      # somehow comes out unsorted ... strange!!
+      for my $st (($sortit ? sort @sd : @sd)) {
         do_entry($t->{$st}, "$n/$st");
       }
     }
@@ -227,10 +237,11 @@ sub addfiles {
 }
 
 
-package main;
+#############################################################
+#
+# back to main mktexlsr package
 
-
-################
+package mktexlsr;
 
 sub main {
   GetOptions("dry-run|n"      => \$opt_dryrun,
@@ -238,7 +249,6 @@ sub main {
              "verbose!"       => \$opt_verbose,
              "quiet|q|silent" => sub { $opt_verbose = 0 },
              "sort"           => \$opt_sort,
-             "test"           => \$opt_test,
              "output|o=s"     => \$opt_output,
              "follow!"        => \$opt_follow,
              "version|v"      => \$opt_version) or
@@ -257,18 +267,13 @@ sub main {
     exit (1);
   }
 
-  if ($opt_test) {
-    &do_tests();
-    exit(0);
-  }
-
   for my $t (find_lsr_trees()) {
     my $lsr = new TeX::LSR(root => $t);
     if ($lsr->loadtree()) {
       if ($opt_output) {
-        $lsr->write($opt_output);
+        $lsr->write(filename => $opt_output, sort => $opt_sort);
       } else {
-        $lsr->write();
+        $lsr->write(sort => $opt_sort);
       }
     } else {
       print STDERR "$prg: cannot read $t files, skipping!\n";
@@ -347,44 +352,8 @@ EOF
   exit 0;
 }
 
-
-
-sub do_tests {
-  require Data::Dumper;
-  $Data::Dumper::Indent = 1;
-  chomp (my $t = `kpsewhich -var-value TEXMFDIST`);
-  my $lsr = new TeX::LSR(root => $t);
-  if ($lsr->loadtree()) {
-    chomp (my $outi = `mktemp ls-R.test1.XXXXXXXX`);
-    $lsr->write($outi);
-    print "Test 1 : load TEXMFDIST with loadtree, write lsr to $outi\n";
-    chomp ($outi = `mktemp ls-R.test2.XXXXXXXX`);
-    open OUT, ">$outi";
-    print OUT Data::Dumper->Dumper($lsr);
-    close OUT;
-    print "Test 2 : load TEXMFDIST with loadtree, Dumper to $outi\n";
-  } else {
-    print "Cannot loadtree from $t!\n";
-  }
-  $lsr = new TeX::LSR(root => $t);
-  if ($lsr->loadfile()) {
-    chomp (my $outi = `mktemp ls-R.test3.XXXXXXXX`);
-    $lsr->write($outi);
-    print "Test 3 : load TEXMFDIST with loadfile, write lsr to $outi\n";
-    chomp ($outi = `mktemp ls-R.test4.XXXXXXXX`);
-    open OUT, ">$outi";
-    print OUT Data::Dumper->Dumper($lsr);
-    close OUT;
-    print "Test 4 : load TEXMFDIST with loadfile, Dumper to $outi\n";
-    $lsr->addfiles("bibtex/bib/beebe/foobar", "bibtex/bib/emil/detektive", "foo/bar/baz", "brrrrrr");
-    chomp ($outi = `mktemp ls-R.test5.XXXXXXXX`);
-    $lsr->write($outi);
-    print "Test 5 : load TEXMFDIST with loadfile, add file, write lsr to $outi\n";
-  } else {
-    print STDERR "Cannot loadfile from $t!\n";
-  }
-}
-
+# for module loading!
+1;
 
 __END__
 
