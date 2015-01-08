@@ -38,13 +38,10 @@ use Cwd;
 use File::Spec;
 use File::Find;
 use File::Basename;
-#use Data::Dumper;
-#$Data::Dumper::Indent = 1;
 
 my $opt_dryrun = 0;
 my $opt_help   = 0;
-my $opt_verbose = 1; # TODO should be 0 when not connected to a terminal!
-                     # in shell by checking tty -s
+my $opt_verbose = (-t STDOUT); # test whether connected to a terminal
 my $opt_version = 0;
 my $opt_output;
 my $opt_sort = 0; # for debugging sort output
@@ -171,7 +168,6 @@ sub write {
   my $dosort = 0;
   $fn = $params{'filename'} if $params{'filename'};
   $dosort = $params{'sort'};
-  print "DEBUG: write sorting = $dosort\n";
   if (!defined($self->{'root'})) {
     print STDERR "TeX::LSR: root undefined, cannot write out.\n";
     return 0;
@@ -278,15 +274,6 @@ sub main {
     } else {
       print STDERR "$prg: cannot read $t files, skipping!\n";
     }
-    # only as example how to load a ls-R file
-    # my $lsrfile = new TeX::LSR(root => $t);
-    # if ($lsrfile->loadfile()) {
-    #   print "success loading tree from $t\n";
-    #   print "\n\n========= $t =============\n\n";
-    #   print Dumper $lsrfile->{'tree'};
-    # } else {
-    #   print "bad luck with $t\n";
-    # }
   }
 }
 
@@ -306,7 +293,7 @@ sub find_lsr_trees {
     if ($ret) {
       $lsrs{$ret} = 1;
     } else {
-      # ignored, we simply skip direcoroies that don't exist
+      # ignored, we simply skip directories that don't exist
     }
   }
   return sort(keys %lsrs);
@@ -357,37 +344,6 @@ EOF
 
 __END__
 
-HISTORIC STUFF!!!
-
-sub create_lsr_file {
-  my $t = shift;
-  # TODO find ls-R versus ls-r, use as is, but create ls-R
-  # TODO follow ls-R link
-  print $lsrmagic;
-  print "\n./:";  # hardwired ./ for top-level files -- really necessary?
-  find({ wanted => sub { } , preprocess => \&dir_preprocess }, $t);
-}
-
-sub dir_preprocess {
-  my $rel = $File::Find::dir;
-  $rel =~ s!^$File::Find::topdir!.!;
-  print "\n$rel:\n";
-  my @ds;
-  # the shell script sorted here, but this seems not to be necessary
-  for my $f (@_) {
-    next if ($f eq ".");
-    next if ($f eq "..");
-    next if ($f eq ".git");
-    next if ($f eq ".svn");
-    next if ($f eq ".hg");
-    next if ($f eq ".bzr");
-    print "$f\n";
-    if (-d $f) {
-      push @ds, $f;
-    }
-  }
-  return @ds;
-}
 
 ### Local Variables:
 ### perl-indent-level: 2
