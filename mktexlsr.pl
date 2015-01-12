@@ -21,8 +21,6 @@ BEGIN {
   $ismain = (__FILE__ eq $0);
 }
 
-
-
 # for future inclusion in TeX Live svn:
 my $svnid = '$Id:$';
 my $lastchdate = '$Date:$';
@@ -31,9 +29,9 @@ $lastchdate =~ s/ \(.*$//;
 my $svnrev = '$Revision:$';
 $svnrev =~ s/^\$Revision:\s*//;
 $svnrev =~ s/\s*\$$//;
-my $version = "svn$svnrev ($lastchdate)";
+my $version = "revision $svnrev ($lastchdate)";
 
-use Getopt::Long qw(:config no_autoabbrev ignore_case_always);
+use Getopt::Long;
 use Cwd;
 use File::Spec;
 use File::Find;
@@ -41,10 +39,10 @@ use File::Basename;
 
 my $opt_dryrun = 0;
 my $opt_help   = 0;
-my $opt_verbose = (-t STDOUT); # test whether connected to a terminal
+my $opt_verbose = (-t STDIN); # test whether connected to a terminal
 my $opt_version = 0;
 my $opt_output;
-my $opt_sort = 0; # for debugging sort output
+my $opt_sort = 0;   # for debugging sort output
 my $opt_follow = 1; # follow links - check whether they are dirs or not
 
 (my $prg = basename($0)) =~ s/\.pl$//;
@@ -58,6 +56,7 @@ my $oldlsrmagic =
 &main() if $ismain;
 
 
+
 #################################################################
 #
 # usage as module
@@ -83,34 +82,35 @@ sub loadtree {
   my $self = shift;
   return 0 if (!defined($self->{'root'}));
   return 0 if (! -d $self->{'root'});
+
   my $tree;
   build_tree($tree, $self->{'root'});
   $self->{'tree'} = $tree->{$self->{'root'}};
-  #
+  $self->{'is_loaded'} = 1;
+  return 1;
+
   # code adapted from
   # http://www.perlmonks.org/?node=How%20to%20map%20a%20directory%20tree%20to%20a%20perl%20hash%20tree
-  {
     sub build_tree {
       my $node = $_[0] = {};
       my @s;
       File::Find::find( { follow_fast => $opt_follow, wanted => sub {
-        $node = (pop @s)->[1] while @s and $File::Find::dir ne $s[-1][0];
+        $node = (pop @s)->[1] while (@s && $File::Find::dir ne $s[-1][0]);
         # ignore VCS
         return if ($_ eq ".git");
         return if ($_ eq ".svn");
         return if ($_ eq ".hg");
         return if ($_ eq ".bzr");
+        return if ($_ eq "CVS");
         return $node->{$_} = 1 if (! -d);
-        push @s, [ $File::Find::name, $node ];
+        push (@s, [ $File::Find::name, $node ]);
         $node = $node->{$_} = {};
       }}, $_[1]);
       $_[0]{$_[1]} = delete $_[0]{'.'};
     }
-  }
-  $self->{'is_loaded'} = 1;
-  return 1;
 }
 
+# set the `filename' member; check ls-R first, then ls-r.
 sub setup_filename {
   my $self = shift;
   if (!$self->{'filename'}) {
@@ -125,28 +125,34 @@ sub setup_filename {
   return 1;
 }
 
+
+# read given file; return 0 if failure, 1 if ok.
 sub loadfile {
   my $self = shift;
   return 0 if (!defined($self->{'root'}));
   return 0 if (! -d $self->{'root'});
+
   $self->setup_filename();
-  my $lsrfile = File::Spec->catfile($self->{'root'},$self->{'filename'});
+  my $lsrfile = File::Spec->catfile($self->{'root'}, $self->{'filename'});
   return 0 if (! -r $lsrfile);
-  open FOO, "<", $lsrfile || die ("$prg: really readable $lsrfile: $?");
+
+  open (LSR, "<", $lsrfile)
+    || die "$prg: readable but not openable $lsrfile??: $!";
+
   # check first line for the magic header
-  chomp (my $fl = <FOO>);
-  if (($fl eq $lsrmagic) or ($fl eq $oldlsrmagic)) {
+  chomp (my $fl = <LSR>);
+  if (($fl eq $lsrmagic) || ($fl eq $oldlsrmagic)) {
     my %tree;
     my $t;
-    for my $l (<FOO>) {
+    for my $l (<LSR>) {
       chomp($l);
       next if ($l =~ m!^\s*$!);
       next if ($l =~ m!^\./:!);
       if ($l =~ m!^(.*):!) {
         $t = \%tree;
-        my @a = split(/\//,$1);
+        my @a = split(/\//, $1);
         for (@a) {
-          $t->{$_} = {} if (!defined($t->{$_}) or ($t->{$_} == 1));
+          $t->{$_} = {} if (!defined($t->{$_}) || ($t->{$_} == 1));
           $t = $t->{$_};
         }
       } else {
@@ -155,12 +161,13 @@ sub loadfile {
     }
     $self->{'tree'} = $tree{'.'};
   }
-  close(FOO);
+  close(LSR);
   $self->{'is_loaded'} = 1;
   return 1;
 }
 
-
+# 
+# write tree; return 0 on failure (and give warning), 1 on success.
 sub write {
   my $self = shift;
   my %params = @_;
@@ -169,52 +176,50 @@ sub write {
   $fn = $params{'filename'} if $params{'filename'};
   $dosort = $params{'sort'};
   if (!defined($self->{'root'})) {
-    print STDERR "TeX::LSR: root undefined, cannot write out.\n";
+    warn "TeX::LSR: root undefined, cannot write.\n";
     return 0;
   }
   if ($self->{'is_loaded'} == 0) {
-    print STDERR "TeX::LSR: tree for ", $self->{'root'}, " not loaded, cannot write out!\n";
+    warn "TeX::LSR: tree not loaded, cannot write: $self->{root}\n";
     return 0;
   }
   if (!defined($fn)) {
     $self->setup_filename();
-    $fn = File::Spec->catfile($self->{'root'},$self->{'filename'});
+    $fn = File::Spec->catfile($self->{'root'}, $self->{'filename'});
   }
   if (-e $fn && ! -w $fn) {
-    print STDERR "TeX::LSR: ls-R file at $fn is not writable, skipping.\n";
+    warn "TeX::LSR: ls-R file not writable, skipping: $fn\n";
     return 0;
   }
-  open FOO, ">$fn" ||
-    die "TeX::LSR writable but cannot open?? $?";
-  print FOO "$lsrmagic\n\n";
-  print FOO "./:\n";  # hardwired ./ for top-level files -- really necessary?
+  open (LSR, ">$fn") || die "TeX::LSR writable but cannot open??; $!";
+  print LSR "$lsrmagic\n\n";
+  print LSR "./:\n";  # hardwired ./ for top-level files
   do_entry($self->{'tree'}, ".", $dosort);
-  close FOO;
-  {
+  close LSR;
+  return 1;
+  
     sub do_entry {
       my ($t, $n, $sortit) = @_;
-      print FOO "$n:\n";
+      print LSR "$n:\n";
       my @sd;
-      for my $st (($sortit ? sort(keys %$t) : keys %$t)) {
-        push @sd, $st if (ref($t->{$st}) eq 'HASH');
-        print FOO "$st\n";
+      for my $st ($sortit ? sort(keys %$t) : keys %$t) {
+        push (@sd, $st) if (ref($t->{$st}) eq 'HASH');
+        print LSR "$st\n";
       }
-      print FOO "\n";
-      # somehow comes out unsorted ... strange!!
-      for my $st (($sortit ? sort @sd : @sd)) {
-        do_entry($t->{$st}, "$n/$st");
+      print LSR "\n";
+      for my $st ($sortit ? sort @sd : @sd) {
+        do_entry($t->{$st}, "$n/$st", $sortit);
       }
     }
-  }
-  return 1;
 }
 
 sub addfiles {
   my ($self, @files) = @_;
   if ($self->{'is_loaded'} == 0) {
-    print STDERR "TeX::LSR: tree for ", $self->{'root'}, " not loaded, cannot add files!\n";
+    warn "TeX::LSR: tree not loaded, cannot add files: $self->{root}\n";
     return 0;
   }
+
   # WARNING
   # we don't do any check about the path structure
   # so if a full path is added, it is added *below* the root
@@ -222,10 +227,10 @@ sub addfiles {
   # sure whether this is a good idea
   for my $f (@files) {
     my $t = $self->{'tree'};
-    my @a = split(/\//,$f);
+    my @a = split(/\//, $f);
     my $fn = pop @a;
     for (@a) {
-      $t->{$_} = {} if (!defined($t->{$_}) or ($t->{$_} == 1));
+      $t->{$_} = {} if (!defined($t->{$_}) || ($t->{$_} == 1));
       $t = $t->{$_};
     }
     $t->{$fn} = 1;
@@ -234,9 +239,10 @@ sub addfiles {
 }
 
 
+
 #############################################################
 #
-# back to main mktexlsr package
+# back to main mktexlsr package/program.
 
 package mktexlsr;
 
@@ -248,8 +254,8 @@ sub main {
              "sort"           => \$opt_sort,
              "output|o=s"     => \$opt_output,
              "follow!"        => \$opt_follow,
-             "version|v"      => \$opt_version) or
-    die "Try \"$prg --help\" for more information.\n";
+             "version|v"      => \$opt_version)
+  || die "Try \"$prg --help\" for more information.\n";
 
   help() if $opt_help;
 
@@ -260,21 +266,24 @@ sub main {
 
   if ($opt_output && $#ARGV != 0) {
     # we only support --output with only one tree as argument
-    print STDERR "$prg: using of --output <file> also requires exactely one tree as argument.";
-    exit (1);
+    die "$prg: with --output, exactly one tree must be given: @ARGV\n";
   }
 
   for my $t (find_lsr_trees()) {
     my $lsr = new TeX::LSR(root => $t);
     print "$prg: Updating $t...\n" if $opt_verbose;
     if ($lsr->loadtree()) {
-      if ($opt_output) {
+      if ($opt_dryrun) {
+        print "$prg: Dry run, not writing files.\n" if $opt_dryrun;
+      } elsif ($opt_output) {
+        #warn "writing to $opt_output\n";
         $lsr->write(filename => $opt_output, sort => $opt_sort);
       } else {
+        #warn "writing with sort=$opt_sort\n";
         $lsr->write(sort => $opt_sort);
       }
     } else {
-      print STDERR "$prg: cannot read $t files, skipping!\n";
+      warn "$prg: cannot read files, skipping: $t\n";
     }
   }
   print "$prg: Done.\n" if $opt_verbose;
@@ -317,24 +326,22 @@ ls-R. Else all directories in the search path for ls-R files
 (\$TEXMFDBS) are used.
 
 Options:
-  --dry-run  do not actually update anything
-  --nofollow do not follow symlinks (default to follow)
-  --help     display this help and exit 
-  --output NAME
-             if exactly one DIR is given, the ls-R file will be written to NAME
-  --quiet    cancel --verbose
-  --silent   same as --quiet
-  --verbose  explain what is being done
-  --version  output version information and exit
+  --dry-run, -n  do not actually update anything
+  --help         display this help and exit 
+  --no-follow    do not follow symlinks (default to follow)
+  --output NAME  if exactly one DIR is given, output ls-R file to NAME
+  --quiet        cancel --verbose
+  --silent       same as --quiet
+  --verbose      explain what is being done
+  --version      output version information and exit
   
 If standard input is a terminal, --verbose is on by default.
 
-For more information, see the \`Filename database' section of
+For more information, see the `Filename database' section of
 Kpathsea manual available at http://tug.org/kpathsea.
 
 Report bugs to: tex-k\@tug.org
 TeX Live home page: <http://tug.org/texlive/>
-
 EOF
 ;
   print &version();
