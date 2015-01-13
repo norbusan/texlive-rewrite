@@ -9,8 +9,65 @@
 # Original shell script (C) 1994 Thomas Esser (as texhash), Public domain.
 #
 
+
+=pod
+
+=head1 NAME
+
+C<mktexlsr> and C<TeX::LSR> -- handling of TeX kpathsea file name database C<ls-R>
+
+=head1 SYNOPSIS
+
+mktexlsr [I<option>]... [I<dir>]...
+
+=head1 DESCRIPTION
+
+B<mktexlsr> rebuilds C<ls-R> filename databases used by TeX.  
+If one or more arguments I<dir> are given, these are used as the 
+directories in which to build C<ls-R>. Else all directories in the 
+search path for C<ls-R> files (i.e., \$TEXMFDBS) are used.
+
+=head1 OPTIONS
+
+=over 4
+
+=item B<--dry-run>, B<-n>  
+
+do not actually update anything
+
+=item B<--help>, B<-h>
+
+display this help and exit 
+
+=item B<--nofollow>
+
+do not follow symlinks (default to follow)
+
+=item B<--output[=]>I<NAME>, B<-o> I<NAME>
+
+if exactly one DIR is given, output ls-R file to NAME
+
+=item B<--quiet>, B<-q>, B<--silent>
+
+cancel --verbose
+
+=item B<--verbose>
+
+explain what is being done, defaults to on when output is connected
+to a terminal.
+
+=item B<--version>, B<-v>
+
+output version information and exit
+ 
+=back
+
+=cut
+
 use strict;
 $^W = 1;
+
+
 
 package mktexlsr;
 
@@ -36,6 +93,7 @@ use Cwd;
 use File::Spec;
 use File::Find;
 use File::Basename;
+use Pod::Usage;
 
 my $opt_dryrun = 0;
 my $opt_help   = 0;
@@ -64,6 +122,36 @@ my $oldlsrmagic =
 
 package TeX::LSR;
 
+=pod
+
+=head1 Perl Module Usage
+
+This file also provides a module C<TeX::LSR> that can be used
+as programmatic interface to the C<ls-R> files. Available
+methods are:
+
+  new TeX::LSR( root => $texmftree );
+  $lsr->loadtree();
+  $lsr->loadfile();
+  $lsr->write( [filename => $fn, sort => $do_sort ] );
+  $lsr->addfiles ( @files );
+
+=head1 Methods
+
+=over 4
+
+=item C<< TeX::LSR->new( [root => "$path"] ) >>
+
+create a new C<LSR> object related to the tree in C<$path>, 
+without loading any further information. Returns 1 on success
+and 0 on failure.
+
+The tree is represented as hash, where each file and directory
+acts as key, with files having 1 as value, and directories 
+their recursive representation hash as value.
+
+=cut
+
 sub new {
   my $class = shift;
   my %params = @_;
@@ -76,6 +164,20 @@ sub new {
   bless $self, $class;
   return $self;
 }
+
+=pod
+
+=item C<< $lsr->loadtree() >>
+
+Loads the file information from the actual tree by traversing the
+whole directory recursively.
+
+Common VCS files and directories are ignored (C<.git>, C<.svn>, C<.hg>,
+C<.bzr>, C<CVS>). See above for the representation.
+
+Returns 1 on success, 0 on failure.
+
+=cut
 
 # returns 1 on success, 0 on failure
 sub loadtree {
@@ -94,6 +196,10 @@ sub loadtree {
     sub build_tree {
       my $node = $_[0] = {};
       my @s;
+      # go through all dirs recursively (File::Find::find), 
+      # links are dereferenced according to $opt_follow
+      # add an entry of 1 if it is not a directory, otherwise
+      # create an empty hash as argument
       File::Find::find( { follow_fast => $opt_follow, wanted => sub {
         $node = (pop @s)->[1] while (@s && $File::Find::dir ne $s[-1][0]);
         # ignore VCS
@@ -111,6 +217,14 @@ sub loadtree {
 }
 
 # set the `filename' member; check ls-R first, then ls-r.
+
+=pod C<< $lsr->setup_filename() >>
+
+We support file names C<ls-R> and C<ls-r>, but create as C<ls-R>.
+Internal function, should not be used outside.
+
+=cut
+
 sub setup_filename {
   my $self = shift;
   if (!$self->{'filename'}) {
@@ -126,6 +240,18 @@ sub setup_filename {
 }
 
 
+
+=pod
+
+=item C<< $lsr->loadfile() >>
+
+Loads the file information from the C<ls-R> file. Checks for the
+presence of the magic header as first line.
+
+Returns 1 on success, 0 on failure.
+
+=cut
+
 # read given file; return 0 if failure, 1 if ok.
 sub loadfile {
   my $self = shift;
@@ -167,7 +293,20 @@ sub loadfile {
 }
 
 # 
-# write tree; return 0 on failure (and give warning), 1 on success.
+
+=pod
+
+=item C<< $lsr->write( [ filename => "$fn", sort => $val) >>
+
+Writes out the C<ls-R> file, either to the default file name, or
+to C<$fn> if given. Entries within a directory are not sorted
+(not necessary), but sorting can be enforced by passing a true 
+value to C<sort>.
+
+Returns 1 on success, 0 on failure (and give warning).
+
+=cut
+
 sub write {
   my $self = shift;
   my %params = @_;
@@ -213,6 +352,20 @@ sub write {
     }
 }
 
+=pod
+
+=item C<< $lsr->addfiles( @files ) >>
+
+Adds the files from C<@files> to the C<ls-R> tree. If a file
+is relative, it is added relative the the root of the tree. If
+it is absolute and the root agrees with a prefix of the file name,
+add the remaining part. If they disagree, throw an error 
+(NOT IMPLEMENTED BY NOW).
+
+Returns 1 on success, 0 on failure (and give warning).
+
+=cut
+
 sub addfiles {
   my ($self, @files) = @_;
   if ($self->{'is_loaded'} == 0) {
@@ -238,6 +391,11 @@ sub addfiles {
   return 1;
 }
 
+=pod
+
+=back
+
+=cut
 
 
 #############################################################
@@ -255,9 +413,9 @@ sub main {
              "output|o=s"     => \$opt_output,
              "follow!"        => \$opt_follow,
              "version|v"      => \$opt_version)
-  || die "Try \"$prg --help\" for more information.\n";
+  || pod2usage(2);
 
-  help() if $opt_help;
+  pod2usage(-verbose => 2, -exitval => 0) if $opt_help;
 
   if ($opt_version) {
     print version();
@@ -316,43 +474,25 @@ sub version {
   return $ret;
 }
 
-sub help {
-  my $usage = <<"EOF"
-Usage: $prg [OPTION]... [DIR]...
+# for module loading!
+1;
 
-Rebuild ls-R filename databases used by TeX.  If one or more arguments
-DIRS are given, these are used as the directories in which to build
-ls-R. Else all directories in the search path for ls-R files
-(\$TEXMFDBS) are used.
+=pod
 
-Options:
-  --dry-run, -n  do not actually update anything
-  --help         display this help and exit 
-  --no-follow    do not follow symlinks (default to follow)
-  --output NAME  if exactly one DIR is given, output ls-R file to NAME
-  --quiet        cancel --verbose
-  --silent       same as --quiet
-  --verbose      explain what is being done
-  --version      output version information and exit
-  
-If standard input is a terminal, --verbose is on by default.
+=head1 FURTHER INFORMATION AND BUG REPORTING
 
 For more information, see the `Filename database' section of
 Kpathsea manual available at http://tug.org/kpathsea.
 
-Report bugs to: tex-k\@tug.org
-TeX Live home page: <http://tug.org/texlive/>
-EOF
-;
-  print &version();
-  print $usage;
-  exit 0;
-}
+Report bugs to: tex-k@tug.org
 
-# for module loading!
-1;
+=head1 AUTHORS AND COPYRIGHT
 
-__END__
+This script and its documentation were written for the TeX Live
+distribution (L<http://tug.org/texlive>) and both are licensed under the
+GNU General Public License Version 2 or later.
+
+=cut
 
 
 ### Local Variables:
