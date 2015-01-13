@@ -89,9 +89,6 @@ $svnrev =~ s/\s*\$$//;
 my $version = "revision $svnrev ($lastchdate)";
 
 use Getopt::Long;
-use Cwd;
-use File::Spec;
-use File::Find;
 use File::Basename;
 use Pod::Usage;
 
@@ -121,6 +118,10 @@ my $oldlsrmagic =
 #
 
 package TeX::LSR;
+
+use Cwd;
+use File::Spec::Functions;
+use File::Find;
 
 =pod
 
@@ -259,7 +260,7 @@ sub loadfile {
   return 0 if (! -d $self->{'root'});
 
   $self->setup_filename();
-  my $lsrfile = File::Spec->catfile($self->{'root'}, $self->{'filename'});
+  my $lsrfile = catfile($self->{'root'}, $self->{'filename'});
   return 0 if (! -r $lsrfile);
 
   open (LSR, "<", $lsrfile)
@@ -324,7 +325,7 @@ sub write {
   }
   if (!defined($fn)) {
     $self->setup_filename();
-    $fn = File::Spec->catfile($self->{'root'}, $self->{'filename'});
+    $fn = catfile($self->{'root'}, $self->{'filename'});
   }
   if (-e $fn && ! -w $fn) {
     warn "TeX::LSR: ls-R file not writable, skipping: $fn\n";
@@ -359,8 +360,7 @@ sub write {
 Adds the files from C<@files> to the C<ls-R> tree. If a file
 is relative, it is added relative the the root of the tree. If
 it is absolute and the root agrees with a prefix of the file name,
-add the remaining part. If they disagree, throw an error 
-(NOT IMPLEMENTED BY NOW).
+add the remaining part. If they disagree, throw an error.
 
 Returns 1 on success, 0 on failure (and give warning).
 
@@ -373,14 +373,19 @@ sub addfiles {
     return 0;
   }
 
-  # WARNING
-  # we don't do any check about the path structure
-  # so if a full path is added, it is added *below* the root
-  # we *could* check if the initial prefix is the same, but I am 
-  # sure whether this is a good idea
+  # if we are passed an absolute file name, check whether the prefix
+  # coincides with the root of the texmf tree, and add the relative
+  # file name, otherwise bail out
   for my $f (@files) {
+    if (file_name_is_absolute($f)) {
+      my $cf = canonpath($f);
+      my $cr = canonpath($self->root);
+      if ($cf =~ m/^$cr([\\\/])?(.*)$/) {
+        $f = $2;
+      }
+    }
     my $t = $self->{'tree'};
-    my @a = split(/\//, $f);
+    my @a = split(/[\\\/]/, $f);
     my $fn = pop @a;
     for (@a) {
       $t->{$_} = {} if (!defined($t->{$_}) || ($t->{$_} == 1));
