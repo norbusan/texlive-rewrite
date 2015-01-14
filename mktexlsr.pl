@@ -14,18 +14,23 @@
 
 =head1 NAME
 
-C<mktexlsr> and C<TeX::LSR> -- handling of TeX kpathsea file name database C<ls-R>
+C<mktexlsr> and C<TeX::LSR> - handle TeX's Kpathsea file name database C<ls-R>
 
 =head1 SYNOPSIS
 
 mktexlsr [I<option>]... [I<dir>]...
 
+texhash [I<option>]... [I<dir>]...
+
 =head1 DESCRIPTION
 
-B<mktexlsr> rebuilds C<ls-R> filename databases used by TeX.  
+B<mktexlsr> rebuilds the C<ls-R> filename databases used by TeX.
 If one or more arguments I<dir> are given, these are used as the 
 directories in which to build C<ls-R>. Else all directories in the 
 search path for C<ls-R> files (i.e., \$TEXMFDBS) are used.
+
+B<texhash> is a synonym for B<mktexlsr>; there are no differences in
+behavior based on the name.
 
 =head1 OPTIONS
 
@@ -45,7 +50,7 @@ do not follow symlinks (default to follow)
 
 =item B<--output[=]>I<NAME>, B<-o> I<NAME>
 
-if exactly one DIR is given, output ls-R file to NAME
+if (and only if) exactly one I<dir> is given, output C<ls-R> file to I<NAME>
 
 =item B<--quiet>, B<-q>, B<--silent>
 
