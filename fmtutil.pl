@@ -76,7 +76,7 @@ our %opts = ( quiet => 0 );
 our @cmdline_options = (
   "sys",
   "cnffile=s@", 
-  "fmtdir=s", 
+  "fmtdir=s",
   "no-engine-subdir",
   "no-error-if-no-engine=s",
   "quiet|silent|q",
@@ -180,34 +180,25 @@ sub main {
     warning("$prg: --listcfg currently not implemented, be patient!\n");
     exit(1);
   } elsif ($opts{'disablefmt'}) {
-    warning("$prg: --disablefmt currently not implemented, be patient!\n");
-    exit(1);
+    return callback_enable_disable_format($changes_config_file, 
+                                          $opts{'enablefmt'}, 'disabled');
   } elsif ($opts{'enablefmt'}) {
-    warning("$prg: --enablefmt currently not implemented, be patient!\n");
-    exit(1);
+    return callback_enable_disable_format($changes_config_file, 
+                                          $opts{'enablefmt'}, 'enabled');
   } elsif ($opts{'byfmt'}) {
-    warning("$prg: --byfmt currently not implemented, be patient!\n");
-    exit(1);
+    return callback_build_formats('byfmt', $opts{'byfmt'});
   } elsif ($opts{'byengine'}) {
-    warning("$prg: --byengine currently not implemented, be patient!\n");
-    exit(1);
+    return callback_build_formats('byengine', $opts{'byengine'});
   } elsif ($opts{'byhyphen'}) {
-    warning("$prg: --byhyphen currently not implemented, be patient!\n");
-    exit(1);
+    return callback_build_formats('byhyphen', $opts{'byhyphen'});
   } elsif ($opts{'refresh'}) {
-    warning("$prg: --refresh currently not implemented, be patient!\n");
-    exit(1);
+    return callback_build_formats('refresh');
   } elsif ($opts{'missing'}) {
-    warning("$prg: --missing currently not implemented, be patient!\n");
-    exit(1);
+    return callback_build_formats('missing');
   } elsif ($opts{'all'}) {
-    warning("$prg: --all currently not implemented, be patient!\n");
-    exit(1);
+    return callback_build_formats('all');
   } elsif ($opts{'_dumpdata'}) {
-    require Data::Dumper;
-    $Data::Dumper::Indent = 1;
-    $Data::Dumper::Indent = 1;
-    print Data::Dumper::Dumper($alldata);
+    dump_data();
     exit(0);
   } else {
     warning("$prg: missing command; try fmtutil --help if you need it.\n");
@@ -222,7 +213,179 @@ sub main {
   return 0;
 }
 
+sub dump_data {
+  require Data::Dumper;
+  $Data::Dumper::Indent = 1;
+  $Data::Dumper::Indent = 1;
+  print Data::Dumper::Dumper($alldata);
+}
 
+
+# build_formats
+# (re)builds the formats as selected
+
+sub callback_build_formats {
+  my ($what, $whatarg) = @_;
+  my $suc = 0;
+  my $err = 0;
+  my $nobuild = 0;
+  # we rebuild formats in two rounds:
+  # round 1: only formats with the same name as engine (pdftex/pdftex)
+  # round 2: all other formats
+  # reason: later formats might need earlier formats to be already
+  # initialized (xmltex is one of these examples AFAIR)
+  my $val;
+  for my $fmt (keys %{$alldata->{'merged'}}) {
+    for my $eng (keys %{$alldata->{'merged'}{$fmt}}) {
+      next if ($fmt ne $eng);
+      $val = select_and_rebuild_format($fmt, $eng, $what, $whatarg);
+      if ($val == 0) { $nobuild++; }
+      elsif ($val == -1) { $err++; }
+      elsif ($val == 1)  { $suc++; }
+      else { print_error("callback_build_format: unknown return from select_and_rebuild.\n"); }
+    }
+  }
+  for my $fmt (keys %{$alldata->{'merged'}}) {
+    for my $eng (keys %{$alldata->{'merged'}{$fmt}}) {
+      next if ($fmt eq $eng);
+      $val = select_and_rebuild_format($fmt, $eng, $what, $whatarg);
+      if ($val == 0) { $nobuild++; }
+      elsif ($val == -1) { $err++; }
+      elsif ($val == 1)  { $suc++; }
+      else { print_error("callback_build_format: unknown return from select_and_rebuild.\n"); }
+    }
+  }
+  print_info("Successfully rebuild formats: $suc\n") if ($suc);
+  print_warning("Not rebuild formats: $nobuild\n") if ($nobuild);
+  print_warning("Failure during builds: $err\n") if ($err);
+  return 0;
+}
+
+# select_and_rebuild_format
+# check condition and rebuild the format if selected
+# return values:
+# 1 success
+# 0 not selected
+# -1 failure
+sub select_and_rebuild_format {
+  my ($fmt, $eng, $what, $whatarg) = @_;
+  return(0) if ($alldata->{'merged'}{$fmt}{$eng}{'status'} eq 'disabled');
+  my $doit = 0;
+  # we just identify 'all', 'refresh', 'missing'
+  # I don't see much point in keeping all of them
+  $doit = 1 if ($what eq 'all');
+  $doit = 1 if ($what eq 'refresh');
+  $doit = 1 if ($what eq 'missing');
+  $doit = 1 if ($what eq 'byengine' && $eng eq $whatarg);
+  $doit = 1 if ($what eq 'byfmt' && $fmt eq $whatarg);
+  $doit = 1 if ($what eq 'byhyphen' &&
+                $whatarg eq 
+                (split(/,/ , $alldata->{'merged'}{$fmt}{$eng}{'hyphen'}))[0]);
+  if ($doit) {
+    return rebuild_one_format($fmt,$eng);
+  } else {
+    return 0;
+  }
+}
+
+# rebuild_one_format
+# takes fmt/eng and rebuilds it, irrelevant of any setting
+# return value
+# 1 success
+# -1 error
+sub rebuild_one_format {
+  my ($fmt, $eng) = @_;
+  print_warning("rebuild_one_format: not implemented: $fmt/$eng\n");
+  return -1;
+}
+
+
+#
+# enable_disable_format_engine
+# assumes that format/engine is already defined somewhere,
+# i.e., it $alldata->{'merged'}{$fmt}{$eng} is defined
+#
+# Return values:
+# 1 - success with changes
+# 0 - no changes done
+# -1 - error appeared
+sub enable_disable_format_engine {
+  my ($tc, $fmt, $eng, $mode) = @_;
+  if ($mode eq 'enabled' || $mode eq 'disabled') {
+    if ($alldata->{'merged'}{$fmt}{$eng}{'status'} eq $mode) {
+      print_info("Format/engine combination $fmt/$eng already $mode.\n");
+      print_info("No changes done.\n");
+      return 0;
+    } else {
+      my $origin = $alldata->{'merged'}{$fmt}{$eng}{'origin'};
+      if ($origin ne $tc) {
+        $alldata->{'fmtutil'}{$tc}{'formats'}{$fmt}{$eng} =
+          {%{$alldata->{'fmtutil'}{$origin}{'formats'}{$fmt}{$eng}}}
+      }
+      $alldata->{'fmtutil'}{$tc}{'formats'}{$fmt}{$eng}{'status'} = $mode;
+      $alldata->{'fmtutil'}{$tc}{'formats'}{$fmt}{$eng}{'line'} = -1;
+      $alldata->{'fmtutil'}{$tc}{'formats'}{$fmt}{$eng}{'changed'} = 1;
+      $alldata->{'merged'}{$fmt}{$eng}{'status'} = $mode;
+      $alldata->{'merged'}{$fmt}{$eng}{'origin'} = $tc;
+      dump_data();
+      return save_fmtutil($tc);
+    }
+  } else {
+    print_error("enable_disable_format_engine: unknown mode $mode\n");
+    exit(1);
+  }
+}  
+
+#
+# enable a format named
+#   format[/engine]
+# where the engine part is optional
+# Case 1: no "engine" given:
+# - if format is defined and has only one engine instance -> activate
+# - if format is defined and has more than one engine -> error
+# Case 2: engine given:
+# - if format/engine is defined -> activate
+# - if format/engine is not defined -> error
+#
+# Return values:
+# 1 - success with changes
+# 0 - no changes done
+# -1 - error appeared
+sub callback_enable_disable_format {
+  my ($tc, $fmtname, $mode) = @_;
+  my ($fmt, $eng) = split('/', $fmtname, 2);
+  if ($mode ne 'enabled' && $mode ne 'disabled') {
+    print_error("callback_enable_disable_format: unknown mode $mode.\n");
+    exit 1;
+  }
+  if ($eng) {
+    if ($alldata->{'merged'}{$fmt}{$eng}) {
+      return enable_disable_format_engine($tc, $fmt, $eng, $mode);
+    } else {
+      print_warning("Format/engine combination: $fmt/$eng is not defined.\n");
+      print_warning("Cannot (de)activate it.\n");
+      return -1;
+    }
+  } else {
+    # no engine given, check the number of entries
+    if ($alldata->{'merged'}{$fmt}) {
+      my @engs = keys %{$alldata->{'merged'}{$fmt}};
+      if (($#engs > 0) || ($#engs == -1)) {
+        print_warning("More engines given for format $fmt.\n");
+        print_warning("Please specify one of the engines: @engs\n");
+        print_warning("No changes done.\n");
+        return 0;
+      } else {
+        # only one engine, enable it if necessary!
+        return enable_disable_format_engine($tc, $fmt, $engs[0], $mode);
+      }
+    } else {
+      print_warning("Format $fmt is not defined.\n");
+      print_warning("Cannot (de)activate it.\n");
+      return -1;
+    }
+  }
+}
 
 sub read_fmtutil_files {
   my (@l) = @_;
@@ -475,6 +638,13 @@ sub reset_root_home {
       }
     }
   }
+}
+
+sub print_warning {
+  print STDERR "$prg [WARNING]: ", @_ if (!$opts{'quiet'}) 
+}
+sub print_error {
+  print STDERR "$prg [ERROR]: ", @_;
 }
 
 sub warning {
