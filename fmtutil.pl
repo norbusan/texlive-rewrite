@@ -3,7 +3,7 @@
 # fmtutil - utility to maintain format files.
 # (Maintained in TeX Live:Master/texmf-dist/scripts/texlive.)
 # 
-# Copyright 2014 Norbert Preining
+# Copyright 2014-2015 Norbert Preining
 # This file is licensed under the GNU General Public License version 2
 # or any later version.
 #
@@ -36,6 +36,7 @@ my $version = "svn$svnrev ($lastchdate)";
 use strict;
 use Getopt::Long qw(:config no_autoabbrev ignore_case_always);
 use File::Basename;
+use File::Copy;
 use Cwd;
 #
 # don't import anything automatically, this requires us to explicitly
@@ -122,6 +123,8 @@ our @cmdline_options = (
 
 my $updLSR;
 my $mktexfmtMode = 0;
+# make sure we only echo out *one* line in mktexfmt mode
+my $mktexfmtFirst = 1;
 
 &main();
 
@@ -278,7 +281,7 @@ sub callback_build_formats {
   my $tmpdir = File::Temp::tempdir(CLEANUP => 1);
   #my $tmpdir = File::Temp::tempdir();
   # set up destination directory
-  $opts{'fmtdir'} || ( $opts{'fmtdir'} = "$TEXMFVAR/web2c" ) ;
+  $opts{'fmtdir'} || ( $opts{'fmtdir'} = "$texmfvar/web2c" ) ;
   TeXLive::TLUtils::mkdirhier($opts{'fmtdir'}) if (! -d $opts{'fmtdir'});
   if (! -w $opts{'fmtdir'}) {
     print_error("format directory \`" . $opts{'fmtdir'} ."' is not writable\n");
@@ -363,6 +366,9 @@ sub select_and_rebuild_format {
   $doit = 1 if ($what eq 'missing');
   $doit = 1 if ($what eq 'byengine' && $eng eq $whatarg);
   $doit = 1 if ($what eq 'byfmt' && $fmt eq $whatarg);
+  # TODO
+  # original fmtutil.sh was more strict about existence of the hyphen file
+  # not sure how we proceed here
   $doit = 1 if ($what eq 'byhyphen' &&
                 $whatarg eq 
                 (split(/,/ , $alldata->{'merged'}{$fmt}{$eng}{'hyphen'}))[0]);
@@ -430,7 +436,7 @@ sub rebuild_one_format {
   if (system("kpsewhich -progname=$fmt -format=$kpsefmt $inifile >$nul 2>&1") != 0) {
     # we didn't find the ini file, skip
     print_deferred_warning("inifile $inifile for $fmt/$eng not found.\n");
-    # TODO TODO
+    # TODO
     # should we return failure here? the original script just skipped it
     # but that might not be a good idea? In current TeX Live all formats
     # that are activated should be actually buildable.
@@ -503,7 +509,7 @@ sub rebuild_one_format {
       $retval /= 256 if ($retval > 0);
       print_deferred_error("call to \`$eng -ini $tcxflag $jobswitch $prgswitch $texargs' returned error code $retval\n");
       #
-      # TODO TODO
+      # TODO
       # the original shell script did *not* check the return value
       # so we don't do it either and rely on the checking of the log
       # file and generated files below
@@ -538,11 +544,75 @@ sub rebuild_one_format {
     print_deferred_error("\`$eng -ini $tcxflag $jobswitch $prgswitch $texargs' had errors.\n");
   }
 
-  # TODO TODO TODO
-  # more testing from the fmtutil.sh script
-    
-  return $FMT_FAILURE;
+  my $fulldestdir;
+  if ($opts{'no-engine-subdir'}) {
+    $fulldestdir = $opts{'fmtdir'};
+  } else {
+    $fulldestdir = "$opts{'fmtdir'}/$texengine";
+  }
+  TeXLive::TLUtils::mkdirhier($fulldestdir);
   
+  if (!File::Copy::move( "$fmt.log", "$fulldestdir/$fmt.log")) {
+    print_deferred_error("Cannot move $fmt.log to $fulldestdir.\n");
+  }
+
+  my $destfile = "$fulldestdir/$fmtfile";
+  if (File::Copy::move( $fmtfile, $destfile )) {
+    print_info("$destfile installed.\n");
+    #
+    # TODO
+    # original fmtutil.sh did some magic trick for mplib-luatex.mem
+    # is this still necessary????
+    #
+    # As a special special case, we create mplib-luatex.mem for use by
+    # the mplib embedded in luatex if it doesn't already exist.  (We
+    # never update it if it does exist.)
+    #
+    # This is used by the luamplib package.  This way, an expert user
+    # who wants to try a new version of luatex (hence with a new
+    # version of mplib) can manually update mplib-luatex.mem without
+    # having to tamper with mpost itself.
+    #
+    #  if test "x$format" = xmpost && test "x$engine" = xmpost; then
+    #    mplib_mem_name=mplib-luatex.mem
+    #    mplib_mem_file=$fulldestdir/$mplib_mem_name
+    #    if test \! -f $mplib_mem_file; then
+    #      verboseMsg "$progname: copying $destfile to $mplib_mem_file"
+    #      if cp "$destfile" "$mplib_mem_file" </dev/null; then
+    #        mktexupd "$fulldestdir" "$mplib_mem_name"
+    #      else
+	  #  # failure to copy merits failure handling: e.g., full file system.
+    #        log_failure "cp $destfile $mplib_mem_file failed."
+    #      fi
+    #    else
+    #      verboseMsg "$progname: $mplib_mem_file already exists, not updating."
+    #    fi
+    #  fi
+
+    if ($mktexfmtMode && $mktexfmtFirst) {
+      print "$destfile\n";
+      $mktexfmtFirst = 0;
+    }
+
+    # TODO
+    # should be replaced by mktexlsr perl module
+    $updLSR->{'add'}($destfile);
+    $updLSR->{'exec'}();
+    $updLSR->{'reset'}();
+
+    return $FMT_SUCCESS;
+  } else {
+    print_deferred_error("Cannot move $fmtfile to $destfile.\n");
+    if (-f $destfile) {
+      # remove the empty file possibly left over if a near-full file system.
+      print_verbose("Removing partial file $destfile after move failure ...\n");
+      unlink($destfile) || print_deferred_error("Removing $destfile failed.\n");
+    }
+    return $FMT_FAILURE;
+  }
+
+  print_deferred_error("we should not be here $fmt/$eng\n");
+  return $FMT_FAILURE;
 }
 
 
