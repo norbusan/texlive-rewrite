@@ -33,13 +33,32 @@ $svnrev =~ s/^\$Revision:\s*//;
 $svnrev =~ s/\s*\$$//;
 my $version = "svn$svnrev ($lastchdate)";
 
-use Getopt::Long qw(:config no_autoabbrev ignore_case_always);
 use strict;
-use TeXLive::TLUtils qw(mkdirhier mktexupd win32 basename dirname 
-  sort_uniq member touch);
+use Getopt::Long qw(:config no_autoabbrev ignore_case_always);
+use File::Basename;
+use Cwd;
+#
+# don't import anything automatically, this requires us to explicitly
+# call functions with TeXLive::TLUtils prefix, and makes it easier to
+# find and if necessary remove references to TLUtils
+use TeXLive::TLUtils qw();
 
 #use Data::Dumper;
 #$Data::Dumper::Indent = 1;
+
+
+#
+# numerical constants
+my $FMT_NOTSELECTED = 0;
+my $FMT_DISABLED    = 1;
+my $FMT_FAILURE     = 2;
+my $FMT_SUCCESS     = 3;
+my $FMT_NOTAVAIL    = 4;
+
+my $nul = (win32() ? 'nul' : '/dev/null');
+
+my @deferred_stderr;
+my @deferred_stdout;
 
 (our $prg = basename($0)) =~ s/\.pl$//;
 
@@ -102,21 +121,43 @@ our @cmdline_options = (
   );
 
 my $updLSR;
+my $mktexfmtMode = 0;
 
 &main();
 
 ###############
 
 sub main {
-  GetOptions(\%opts, @cmdline_options) or 
-      die "Try \"$prg --help\" for more information.\n";
-
+  if ($prg eq "mktexfmt") {
+    # mktexfmtMode: if called as mktexfmt, set to true. Will echo the
+    # first generated filename after successful generation to stdout then
+    # (and nothing else), since kpathsea can only deal with one.
+    $mktexfmtMode = 1;
+    GetOptions ( "help" => \$opts{'help'}, "version" => \$opts{'version'} )
+        or die "Unknown option in command line arguments\n";
+    if ($ARGV[0]) {
+      if ($ARGV[0] =~ m/^(.*)\.(fmt|mem|base)$/) {
+        $opts{'byfmt'} = $1;
+      } elsif ($ARGV[0] =~ m/\./) {
+        die "unknown format type: $ARGV[0]";
+      } else {
+        $opts{'byfmt'} = $ARGV[0];
+      }
+    } else {
+      die "missing argument to mktexmft";
+    }
+  } else {
+    GetOptions(\%opts, @cmdline_options) or 
+        die "Try \"$prg --help\" for more information.\n";
+  }
+  
   help() if $opts{'help'};
 
   if ($opts{'version'}) {
     print version();
     exit (0);
   }
+
 
   # these two functions should go to TLUtils!
   check_hidden_sysmode();
@@ -131,7 +172,8 @@ sub main {
   $bakFile =~ s/\.cfg$/.bak/;
   my $changed = 0;
 
-  $updLSR = &mktexupd();
+  # should be replaces by new mktexlsr perl version
+  $updLSR = &TeXLive::TLUtils::mktexupd();
   $updLSR->{mustexist}(0);
 
   my $cmd;
@@ -168,16 +210,16 @@ sub main {
           }
           printf "$ff\n";
         } else {
-          warning("hyphenfile $hf (for $f/$e) not found!\n");
+          print_warning("hyphenfile $hf (for $f/$e) not found!\n");
           abort();
         }
       }
     }
   } elsif ($opts{'catcfg'}) {
-    warning("$prg: --catcfg command not supported anymore!\n");
+    print_warning("--catcfg command not supported anymore!\n");
     exit(1);
   } elsif ($opts{'listcfg'}) {
-    warning("$prg: --listcfg currently not implemented, be patient!\n");
+    print_warning("--listcfg currently not implemented, be patient!\n");
     exit(1);
   } elsif ($opts{'disablefmt'}) {
     return callback_enable_disable_format($changes_config_file, 
@@ -228,7 +270,43 @@ sub callback_build_formats {
   my ($what, $whatarg) = @_;
   my $suc = 0;
   my $err = 0;
+  my $disabled = 0;
   my $nobuild = 0;
+  my $notavail = 0;
+  #
+  # set up a tmp dir
+  my $tmpdir = File::Temp::tempdir(CLEANUP => 1);
+  #my $tmpdir = File::Temp::tempdir();
+  # set up destination directory
+  $opts{'fmtdir'} || ( $opts{'fmtdir'} = "$TEXMFVAR/web2c" ) ;
+  TeXLive::TLUtils::mkdirhier($opts{'fmtdir'}) if (! -d $opts{'fmtdir'});
+  if (! -w $opts{'fmtdir'}) {
+    print_error("format directory \`" . $opts{'fmtdir'} ."' is not writable\n");
+    exit (1);
+  }
+  # since the directory does not exist, we can make it absolute with abs_path
+  # without andy trickery around non-existing dirs
+  $opts{'fmtdir'} = Cwd::abs_path($opts{'fmtdir'});
+  # for safety, check again
+  die ("abs_path didn't succeed, that is strange: $?") if !$opts{'fmtdir'};
+   
+  #
+  # code taken over from the original shell script for KPSE_DOT etc
+  my $thisdir = cwd();
+  $ENV{'KPSE_DOT'} = $thisdir;
+
+  # due to KPSE_DOT, we don't search the current directory, so include
+  # it explicitly for formats that \write and later on \read
+  $ENV{'TEXINPUTS'} = "$tmpdir:" . ($ENV{'TEXINPUTS'} ? $ENV{'TEXINPUTS'} : "");
+  # for formats that load other formats (e.g., jadetex loads latex.fmt),
+  # add the current directory to TEXFORMATS, too.  Currently unnecessary
+  # for MFBASES and MPMEMS.
+  $ENV{'TEXFORMATS'} = "$tmpdir:" . ($ENV{'TEXFORMATS'} ? $ENV{'TEXFORMATS'} : "");
+
+  #
+  # switch to temporary directory for format generation
+  chdir($tmpdir) || die("Cannot change to directory $tmpdir: $?");
+  
   # we rebuild formats in two rounds:
   # round 1: only formats with the same name as engine (pdftex/pdftex)
   # round 2: all other formats
@@ -239,9 +317,11 @@ sub callback_build_formats {
     for my $eng (keys %{$alldata->{'merged'}{$fmt}}) {
       next if ($fmt ne $eng);
       $val = select_and_rebuild_format($fmt, $eng, $what, $whatarg);
-      if ($val == 0) { $nobuild++; }
-      elsif ($val == -1) { $err++; }
-      elsif ($val == 1)  { $suc++; }
+      if ($val == $FMT_DISABLED) { $disabled++; }
+      elsif ($val == $FMT_NOTSELECTED) { $nobuild++; }
+      elsif ($val == $FMT_FAILURE) { $err++; }
+      elsif ($val == $FMT_SUCCESS)  { $suc++; }
+      elsif ($val == $FMT_NOTAVAIL) { $notavail++; }
       else { print_error("callback_build_format: unknown return from select_and_rebuild.\n"); }
     }
   }
@@ -249,27 +329,32 @@ sub callback_build_formats {
     for my $eng (keys %{$alldata->{'merged'}{$fmt}}) {
       next if ($fmt eq $eng);
       $val = select_and_rebuild_format($fmt, $eng, $what, $whatarg);
-      if ($val == 0) { $nobuild++; }
-      elsif ($val == -1) { $err++; }
-      elsif ($val == 1)  { $suc++; }
+      if ($val == $FMT_DISABLED) { $disabled++; }
+      elsif ($val == $FMT_NOTSELECTED) { $nobuild++; }
+      elsif ($val == $FMT_FAILURE) { $err++; }
+      elsif ($val == $FMT_SUCCESS)  { $suc++; }
+      elsif ($val == $FMT_NOTAVAIL) { $notavail++; }
       else { print_error("callback_build_format: unknown return from select_and_rebuild.\n"); }
     }
   }
+  my $stdo = ($mktexfmtMode ? \*STDERR : \*STDOUT);
+  for (@deferred_stdout) { print $stdo $_; }
+  for (@deferred_stderr) { print STDERR $_; }
+  print_info("Disabled formats: $disabled\n") if ($disabled);
   print_info("Successfully rebuild formats: $suc\n") if ($suc);
-  print_warning("Not rebuild formats: $nobuild\n") if ($nobuild);
-  print_warning("Failure during builds: $err\n") if ($err);
+  print_info("Not selected formats: $nobuild\n") if ($nobuild);
+  print_info("Not available formats: $notavail\n") if ($notavail);
+  print_info("Failure during builds: $err\n") if ($err);
   return 0;
 }
 
 # select_and_rebuild_format
 # check condition and rebuild the format if selected
-# return values:
-# 1 success
-# 0 not selected
-# -1 failure
+# return values: $FMT_*
 sub select_and_rebuild_format {
   my ($fmt, $eng, $what, $whatarg) = @_;
-  return(0) if ($alldata->{'merged'}{$fmt}{$eng}{'status'} eq 'disabled');
+  return($FMT_DISABLED) 
+      if ($alldata->{'merged'}{$fmt}{$eng}{'status'} eq 'disabled');
   my $doit = 0;
   # we just identify 'all', 'refresh', 'missing'
   # I don't see much point in keeping all of them
@@ -284,19 +369,180 @@ sub select_and_rebuild_format {
   if ($doit) {
     return rebuild_one_format($fmt,$eng);
   } else {
-    return 0;
+    return $FMT_NOTSELECTED;
   }
 }
 
 # rebuild_one_format
 # takes fmt/eng and rebuilds it, irrelevant of any setting
-# return value
-# 1 success
-# -1 error
+# return value FMT_
 sub rebuild_one_format {
   my ($fmt, $eng) = @_;
-  print_warning("rebuild_one_format: not implemented: $fmt/$eng\n");
-  return -1;
+
+  # get variables
+  my $hyphen  = $alldata->{'merged'}{$fmt}{$eng}{'hyphen'};
+  my $addargs = $alldata->{'merged'}{$fmt}{$eng}{'args'};
+
+  # running parameters
+  my $texengine;
+  my $jobswitch = "-jobname=$fmt";
+  my $prgswitch = "-progname=" ;
+  my $fmtfile = $fmt;
+  my $kpsefmt;
+  my $pool;
+  my $tcx = "";
+  my $tcxflag = "";
+  my $localpool=0;
+  my $texargs;
+
+  unlink glob "*.pool";
+
+
+  # addargs processing:
+  # can contain:
+  # nls stuff (pool/tcx) see below
+  # ini file (last argument)
+  my $inifile = $addargs;
+  $inifile = (split(' ', $addargs))[-1];
+  # get rid of leading * in inifiles
+  $inifile =~ s/^\*//;
+
+  if ($fmt eq "metafun")       { $prgswitch .= "mpost"; }
+  elsif ($fmt eq "mptopdf")    { $prgswitch .= "context"; }
+  elsif ($fmt =~ m/^cont-..$/) { $prgswitch .= "context"; }
+  else                         { $prgswitch .= $fmt; }
+
+  if ($eng eq "mpost") { 
+    $fmtfile .= ".mem" ; 
+    $kpsefmt = "mp" ; 
+    $texengine = "metapost";
+  } elsif ($eng =~ m/^mf(w|-nowin)?$/) {
+    $fmtfile .= ".base" ; 
+    $kpsefmt = "mf" ; 
+    $texengine = "metafont";
+  } else {
+    $fmtfile .= ".fmt" ; 
+    $kpsefmt = "tex" ; 
+    $texengine = $eng;
+  }
+  
+  # check for existence of ini file before doing anything else
+  if (system("kpsewhich -progname=$fmt -format=$kpsefmt $inifile >$nul 2>&1") != 0) {
+    # we didn't find the ini file, skip
+    print_deferred_warning("inifile $inifile for $fmt/$eng not found.\n");
+    # TODO TODO
+    # should we return failure here? the original script just skipped it
+    # but that might not be a good idea? In current TeX Live all formats
+    # that are activated should be actually buildable.
+    return $FMT_NOTAVAIL;
+  }
+  
+  # NLS support
+  #   Example (for fmtutil.cnf):
+  #     mex-pl tex mexconf.tex nls=tex-pl,il2-pl mex.ini
+  # The nls parameter (pool,tcx) can only be specified as the first argument
+  # inside the 4th field in fmtutil.cnf.
+  if ($addargs =~ m/^nls=([^\s]+)\s+(.*)$/) {
+    $texargs = $2;
+    ($pool, $tcx) = split(',', $1);
+    $tcx || ($tcx = '');
+  } else {
+    $texargs = $addargs;
+  }
+  if ($pool) {
+    chomp ( my $poolfile = `kpsewhich -progname=$eng $pool.poo 2>$nul` );
+    if ($poolfile && -f $poolfile) {
+      print_verbose ("attempting to create localized format using pool=$pool and tcx=$tcx.\n");
+      File::Copy($poolfile, "$eng.pool");
+      $tcxflag = "-translate-file=$tcx" if ($tcx);
+      $localpool = 1;
+    }
+  }
+
+  # Check for infinite recursion before running the iniTeX:
+  # We do this check only if we are running in mktexfmt mode
+  # otherwise double format definitions will create an infinite loop, too
+  if ($mktexfmtMode) {
+    if ($ENV{'mktexfmt_loop'}) {
+      if ($ENV{'mktexfmt_loop'} =~ m!:$fmt/$eng:!) {
+        die "$prg: infinite recursion detected in $fmt/$eng, giving up!";
+      }
+    } else {
+      $ENV{'mktexfmt_loop'} = '';
+    }
+    $ENV{'mktexfmt_loop'} .= ":$fmt/$eng:";
+  }
+
+  #
+  # check for existence of $engine
+  # we do *NOT* use the return value but rely on execution of the shell
+  if (!TeXLive::TLUtils::which($eng)) {
+    if ($opts{'no-error-if-no-engine'} &&
+        ",$opts{'no-error-if-no-engine'}," =~ m/,$eng,/) {
+      return $FMT_NOTAVAIL;
+    } else {
+      print_deferred_error("not building $fmt due to missing engine $eng.\n");
+      return $FMT_FAILURE;
+    }
+  }
+
+  print_verbose("running \`$eng -ini $tcxflag $jobswitch $prgswitch $texargs' ...\n");
+
+  {
+    my $texpool = $ENV{'TEXPOOL'};
+    if ($localpool) {
+      $ENV{'TEXPOOL'} = cwd() . ":" . ($texpool ? $texpool : "");
+    }
+
+    # in mktexfmtMode we need to redirect *all* output to stderr
+    my $cmdline = "$eng  -ini $tcxflag $jobswitch $prgswitch $texargs";
+    $cmdline .= " >&2" if $mktexfmtMode;
+    $cmdline .= " <$nul";
+    my $retval = system($cmdline);
+    if ($retval != 0) {
+      $retval /= 256 if ($retval > 0);
+      print_deferred_error("call to \`$eng -ini $tcxflag $jobswitch $prgswitch $texargs' returned error code $retval\n");
+      #
+      # TODO TODO
+      # the original shell script did *not* check the return value
+      # so we don't do it either and rely on the checking of the log
+      # file and generated files below
+    }
+
+    if ($localpool) {
+      if ($texpool) {
+        $ENV{'TEXPOOL'} = $texpool;
+      } else {
+        delete $ENV{'TEXPOOL'};
+      }
+    }
+
+  }
+
+  #
+  # check and install of fmt and log files
+  if (! -f $fmtfile) {
+    print_deferred_error("\`$eng -ini $tcxflag $jobswitch $prgswitch $texargs' failed\n");
+    return $FMT_FAILURE;
+  }
+
+  if (! -f "$fmt.log") {
+    print_deferred_error("no log file generated for $fmt/$eng, strange\n");
+    return $FMT_FAILURE;
+  }
+
+  open LOGFILE, "<$fmt.log" || print_deferred_warning("cannot open $fmt.log?\n");
+  my @logfile = <LOGFILE>;
+  close LOGFILE;
+  if (grep(/^!/, @logfile) > 0) {
+    print_deferred_error("\`$eng -ini $tcxflag $jobswitch $prgswitch $texargs' had errors.\n");
+  }
+
+  # TODO TODO TODO
+  # more testing from the fmtutil.sh script
+    
+  return $FMT_FAILURE;
+  
 }
 
 
@@ -443,7 +689,7 @@ sub read_fmtutil_file {
       # not, so we have to assume that it is
       my $d = shift @rest;
       if (!defined($d)) {
-        warning("$prg: apparently not a real disable line, ignored: $_\n");
+        print_warning("apparently not a real disable line, ignored: $_\n");
         next;
       } else {
         $disabled = 1;
@@ -451,7 +697,7 @@ sub read_fmtutil_file {
       }
     }
     if (defined($alldata->{'fmtutil'}{$fn}{'formats'}{$a}{$b})) {
-      warning("$prg: double mention of $a/$b in $fn\n");
+      print_warning("double mention of $a/$b in $fn\n");
     } else {
       $alldata->{'fmtutil'}{$fn}{'formats'}{$a}{$b}{'hyphen'} = $c;
       $alldata->{'fmtutil'}{$fn}{'formats'}{$a}{$b}{'args'} = "@rest";
@@ -482,7 +728,7 @@ sub check_hidden_sysmode {
   # and if, then switch to sys mode (with a warning)
   if (($TEXMFSYSCONFIG eq $TEXMFCONFIG) && ($TEXMFSYSVAR eq $TEXMFVAR)) {
     if (!$opts{'sys'}) {
-      warning("$prg: hidden sys mode found, switching to sys mode.\n");
+      print_warning("hidden sys mode found, switching to sys mode.\n");
       $opts{'sys'} = 1;
     }
   }
@@ -627,28 +873,70 @@ sub reset_root_home {
       my (undef,undef,undef,undef,undef,undef,undef,$roothome) = getpwuid(0);
       if (defined($roothome)) {
         if ($envhome ne $roothome) {
-          warning("$prg: resetting \$HOME value (was $envhome) to root's "
+          print_warning("resetting \$HOME value (was $envhome) to root's "
             . "actual home ($roothome).\n");
           $ENV{'HOME'} = $roothome;
         } else {
           # envhome and roothome do agree, nothing to do, that is the good case
         }
       } else { 
-        warning("$prg: home of root not defined, strange!\n");
+        print_warning("home of root not defined, strange!\n");
       }
     }
   }
 }
 
+#
+# printing to stdout (in mktexfmtMode also going to stderr!)
+#   print_info    can be supressed with --quiet
+#   print_verbose cannot be supressed
+# printing to stderr
+#   print_warning can be supressed with --quiet
+#   print_error   cannot be supressed
+#
+sub print_info {
+  if ($mktexfmtMode) {
+    print STDERR "$prg [INFO]: ", @_ if (!$opts{'quiet'});
+  } else {
+    print STDOUT "$prg [INFO]: ", @_ if (!$opts{'quiet'});
+  }
+}
+sub print_verbose {
+  if ($mktexfmtMode) {
+    print STDERR "$prg: ", @_;
+  } else {
+    print STDOUT "$prg: ", @_;
+  }
+}
 sub print_warning {
   print STDERR "$prg [WARNING]: ", @_ if (!$opts{'quiet'}) 
 }
 sub print_error {
   print STDERR "$prg [ERROR]: ", @_;
 }
+#
+# same with deferred
+sub print_deferred_info {
+  push @deferred_stdout, "$prg [INFO]: @_" if (!$opts{'quiet'});
+}
+sub print_deferred_verbose {
+  push @deferred_stdout, "$prg: @_";
+}
+sub print_deferred_warning {
+  push @deferred_stderr, "$prg [WARNING]: @_" if (!$opts{'quiet'}) 
+}
+sub print_deferred_error {
+  push @deferred_stderr, "$prg [ERROR]: @_";
+}
 
-sub warning {
-  print STDERR @_;
+
+# copied from TeXLive::TLUtils to reduce dependencies
+sub win32 {
+  if ($^O =~ /^MSWin/i) {
+    return 1;
+  } else {
+    return 0;
+  }
 }
 
 
