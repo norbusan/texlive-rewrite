@@ -436,11 +436,9 @@ sub rebuild_one_format {
   if (system("kpsewhich -progname=$fmt -format=$kpsefmt $inifile >$nul 2>&1") != 0) {
     # we didn't find the ini file, skip
     print_deferred_warning("inifile $inifile for $fmt/$eng not found.\n");
-    # TODO
-    # should we return failure here? the original script just skipped it
-    # but that might not be a good idea? In current TeX Live all formats
-    # that are activated should be actually buildable.
-    return $FMT_NOTAVAIL;
+    # The original script just skipped it but in TeX Live we expect that
+    # all activated formats are also buildable, thus return failure.
+    return $FMT_FAILURE;
   }
   
   # NLS support
