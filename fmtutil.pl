@@ -118,6 +118,7 @@ our @cmdline_options = (
   "edit",
   "version",
   "help|h",
+  "strict",
   "_dumpdata",
   );
 
@@ -507,10 +508,13 @@ sub rebuild_one_format {
       $retval /= 256 if ($retval > 0);
       print_deferred_error("call to \`$eng -ini $tcxflag $jobswitch $prgswitch $texargs' returned error code $retval\n");
       #
-      # TODO
-      # the original shell script did *not* check the return value
-      # so we don't do it either and rely on the checking of the log
-      # file and generated files below
+      # original shell script did *not* check the return value
+      # we keep this behaviour, but add an option --strict that
+      # errors out on all failures.
+      if ($opts{'strict'}) {
+        print_deferred_error("return error due to options --strict\n");
+        return $FMT_FAILURE;
+      }
     }
 
     if ($localpool) {
