@@ -22,6 +22,7 @@ BEGIN {
   chomp($TEXMFROOT);
   unshift (@INC, "$TEXMFROOT/tlpkg", "$TEXMFROOT/texmf-dist/scripts/texlive");
   require "mktexlsr.pl";
+  TeX::Update->import();
 }
 
 
@@ -180,8 +181,8 @@ sub main {
   my $changed = 0;
 
   # should be replaces by new mktexlsr perl version
-  $updLSR = &TeXLive::TLUtils::mktexupd();
-  $updLSR->{mustexist}(0);
+  $updLSR = new TeX::Update;
+  $updLSR->mustexist(0);
 
   my $cmd;
   if ($opts{'edit'}) {
@@ -256,7 +257,7 @@ sub main {
 
   if (!$opts{'nohash'}) {
     print "$prg: Updating ls-R files.\n" if !$opts{'quiet'};
-    $updLSR->{exec}() unless $opts{"dry-run"};
+    $updLSR->exec() unless $opts{"dry-run"};
   }
 
   return 0;
@@ -565,9 +566,10 @@ sub rebuild_one_format {
   if (File::Copy::move( $fmtfile, $destfile )) {
     print_info("$destfile installed.\n");
     #
-    # TODO
     # original fmtutil.sh did some magic trick for mplib-luatex.mem
-    # is this still necessary????
+    #
+    # nowadays no mplib mem is created and all files loaded
+    # so we comment and do not convert this
     #
     # As a special special case, we create mplib-luatex.mem for use by
     # the mplib embedded in luatex if it doesn't already exist.  (We
@@ -599,11 +601,9 @@ sub rebuild_one_format {
       $mktexfmtFirst = 0;
     }
 
-    # TODO
-    # should be replaced by mktexlsr perl module
-    $updLSR->{'add'}($destfile);
-    $updLSR->{'exec'}();
-    $updLSR->{'reset'}();
+    $updLSR->add($destfile);
+    $updLSR->exec();
+    $updLSR->reset();
 
     return $FMT_SUCCESS;
   } else {

@@ -73,7 +73,6 @@ use strict;
 $^W = 1;
 
 
-
 package mktexlsr;
 
 my $ismain;
@@ -136,7 +135,7 @@ This file also provides a module C<TeX::LSR> that can be used
 as programmatic interface to the C<ls-R> files. Available
 methods are:
 
-  new TeX::LSR( root => $texmftree );
+  $lsr = new TeX::LSR( root => $texmftree );
   $lsr->loadtree();
   $lsr->loadfile();
   $lsr->write( [filename => $fn, sort => $do_sort ] );
@@ -246,6 +245,29 @@ sub setup_filename {
 }
 
 
+
+=pod
+
+=item C<< $lsr->load() >>
+
+Loads the file information either from the C<lsr-R> file, if
+present, otherwise from the actual tree.
+
+Returns 1 on success, 0 on failure.
+
+=cut
+
+sub load {
+  my $self = shift;
+  return 0 if (!defined($self->{'root'}));
+  return 0 if (! -d $self->{'root'});
+  $self->setup_filename();
+  if (-r $self->{'filename'}) {
+    return $self->loadfile();
+  } else {
+    return $self->loadtree();
+  }
+}
 
 =pod
 
@@ -387,6 +409,9 @@ sub addfiles {
       my $cr = canonpath($self->root);
       if ($cf =~ m/^$cr([\\\/])?(.*)$/) {
         $f = $2;
+      } else {
+        warn("File $f does not reside in $self->root.");
+        return 0;
       }
     }
     my $t = $self->{'tree'};
@@ -408,6 +433,168 @@ sub addfiles {
 =cut
 
 
+
+
+##########################################################
+#
+# package TeX::Update
+#
+# based on the mktexupd function in TLUtils
+
+package TeX::Update;
+
+use File::Path qw(make_path);
+
+=pod
+
+=head1 TeX ls-R Update module
+
+This file also provides a module C<TeX::Update> that can be used
+to add files to their respective trees.
+Available methods are:
+
+  $upd = new TeX::Update();
+  $upd->mustexist(1);
+  $upd->add(file1, [file2]);
+  $upd->add(file3);
+  $upd->exec();
+  $upd->reset();
+
+=head1 Methods
+
+=over 4
+
+=item C<< TeX::Update->new() >>
+
+Create a new TeX::Update object.
+
+=cut
+
+sub new {
+  my $class = shift;
+  my $self = {
+    files => {},
+    mustexist => 0,
+  };
+  bless $self, $class;
+  return $self;
+}
+
+=pod
+
+=item C<< $upd->add( @files ) >>
+
+Adds a list of files without any checks done.
+Returns 1.
+
+=cut
+
+sub add {
+  my $self = shift;
+  foreach my $file (@_) {
+    $file =~ s|\\|/|g;
+    $self->{'files'}{$file} = 1;
+  }
+  return 1;
+}
+
+=pod
+
+=item C<< $upd->reset( ) >>
+
+Removes all references to added files. Returns 1.
+
+=cut
+
+sub reset {
+  my $self = shift;
+  $self->{'files'} = {};
+  return 1;
+}
+
+=pod
+
+=item C<< $upd->mustexist( [ $newvalue ] ) >>
+
+Wit C<$newvalue> given, sets the mustexist propery. In both
+cases returns the current value afterwards.
+
+=cut
+
+sub mustexist {
+  my $self = shift;
+  if (@_) { $self->{'mustexist'} = shift }
+  return $self->{'mustexist'};
+}
+
+=pod
+
+=item C<< $upd->exec( ) >>
+
+Goes through all added files, determines whether the files is contained
+in a tree that contains a ls-R files. If yes, adds the files there.
+If the mustexist property is set, bails out in case a file does not
+exists. 
+
+Returns 1 on success, 0 on failure (and give warning).
+
+=cut
+
+sub exec {
+  my $self = shift;
+  # first check whether all files exist
+  if ($self->{'mustexist'}) {
+    for my $f (keys %{$self->{'files'}}) {
+      die "File \'$f\' doesn't exist.\n" if (! -f $f);
+    }
+  }
+  my @texmfdbs = mktexlsr::find_default_lsr_trees();
+  # filter files into the respective trees
+  my %dbs;
+  for my $p (keys %{$self->{'files'}}) {
+    for my $db (@texmfdbs) {
+      # remove terminal / if present
+      $db =~ s|/$||;
+      # lowercase for Windows
+      $db = lc($db) if mktexlsr::win32();
+      # search path
+      my $used_path = mktexlsr::win32() ? lc($p) : $p;
+      # check whether $p/$used_path is a file in $db
+      # we append a / to make sure that subdirs do not overlap (texmf/-dist)
+      if ( substr($used_path, 0, length("$db/")) eq "$db/" ) {
+        # fie $p/$used_path resides in the current $db
+        # strip initial $db/
+        my $filepart = substr($used_path, length("$db/"));
+        $dbs{$db}{$filepart} = 1;
+        last; # of the db loops!
+      }
+    }
+  }
+  #
+  # now do the actual work
+  for my $db (keys %dbs) {
+    if (! -d $db) {
+      if (! make_path($db) ) {
+        die "Cannot create directory $db: $!";
+      }
+    }
+    my $lsr = new TeX::LSR(root => $db);
+    # load either from ls-R or tree
+    $lsr->load() || die "Cannot load ls-R in $db.";
+    $lsr->addfiles(keys %{$dbs{$db}}) || die "Cannot add some file to $db.";
+    $lsr->write() || die "Cannot write ls-R in $db.";
+  }
+  return 1;
+}
+
+=pod
+
+=back
+
+=cut
+
+
+
 #############################################################
 #
 # back to main mktexlsr package/program.
@@ -457,15 +644,21 @@ sub main {
   print "$prg: Done.\n" if $opt_verbose;
 }
 
+sub find_default_lsr_trees {
+  # the shellfile used kpsewhich --show-path=ls-R | tr : '\n' 
+  # seems to be simpler than using -var-value TEXMFDBS and
+  # fixing the return value
+  my $delim = win32() ? ';' : ':';
+  chomp( my $t = `kpsewhich -show-path=ls-R` );
+  my @texmfdbs = split($delim, $t);
+  return @texmfdbs;
+}
+
 sub find_lsr_trees {
   my %lsrs;
   my @candidates = @ARGV;
   if (!@candidates) {
-    # the shellfile used kpsewhich --show-path=ls-R | tr : '\n' 
-    # seems to be simpler than using -var-value TEXMFDBS and
-    # fixing the return value
-    chomp( my $t = `kpsewhich -show-path=ls-R` );
-    @candidates = split(':', $t);
+    @candidates = find_default_lsr_trees();
   }
   for my $t (@candidates) {
     my $ret;
@@ -483,6 +676,12 @@ sub version {
   my $ret = sprintf "%s version %s\n", $prg, $version;
   return $ret;
 }
+
+
+sub win32 {
+  return ( ($^O =~ /^MSWin/i) ? 1 : 0 );
+}
+
 
 # for module loading!
 1;
