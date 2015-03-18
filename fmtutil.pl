@@ -20,7 +20,8 @@ BEGIN {
     exit 1;
   }
   chomp($TEXMFROOT);
-  unshift (@INC, "$TEXMFROOT/tlpkg");
+  unshift (@INC, "$TEXMFROOT/tlpkg", "$TEXMFROOT/texmf-dist/scripts/texlive");
+  require "mktexlsr.pl";
 }
 
 
@@ -38,6 +39,8 @@ use Getopt::Long qw(:config no_autoabbrev ignore_case_always);
 use File::Basename;
 use File::Copy;
 use Cwd;
+
+
 #
 # don't import anything automatically, this requires us to explicitly
 # call functions with TeXLive::TLUtils prefix, and makes it easier to
@@ -246,7 +249,7 @@ sub main {
     dump_data();
     exit(0);
   } else {
-    warning("$prg: missing command; try fmtutil --help if you need it.\n");
+    print_error("missing command; try fmtutil --help if you need it.\n");
     exit(1);
   }
 
