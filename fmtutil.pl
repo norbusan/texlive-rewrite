@@ -121,6 +121,7 @@ our @cmdline_options = (
   "edit",
   "version",
   "help|h",
+  "strict",
   "_dumpdata",
   );
 
@@ -439,11 +440,9 @@ sub rebuild_one_format {
   if (system("kpsewhich -progname=$fmt -format=$kpsefmt $inifile >$nul 2>&1") != 0) {
     # we didn't find the ini file, skip
     print_deferred_warning("inifile $inifile for $fmt/$eng not found.\n");
-    # TODO
-    # should we return failure here? the original script just skipped it
-    # but that might not be a good idea? In current TeX Live all formats
-    # that are activated should be actually buildable.
-    return $FMT_NOTAVAIL;
+    # The original script just skipped it but in TeX Live we expect that
+    # all activated formats are also buildable, thus return failure.
+    return $FMT_FAILURE;
   }
   
   # NLS support
@@ -512,10 +511,13 @@ sub rebuild_one_format {
       $retval /= 256 if ($retval > 0);
       print_deferred_error("call to \`$eng -ini $tcxflag $jobswitch $prgswitch $texargs' returned error code $retval\n");
       #
-      # TODO
-      # the original shell script did *not* check the return value
-      # so we don't do it either and rely on the checking of the log
-      # file and generated files below
+      # original shell script did *not* check the return value
+      # we keep this behaviour, but add an option --strict that
+      # errors out on all failures.
+      if ($opts{'strict'}) {
+        print_deferred_error("return error due to options --strict\n");
+        return $FMT_FAILURE;
+      }
     }
 
     if ($localpool) {
