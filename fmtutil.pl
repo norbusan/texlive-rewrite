@@ -61,6 +61,7 @@ my $FMT_SUCCESS     = 3;
 my $FMT_NOTAVAIL    = 4;
 
 my $nul = (win32() ? 'nul' : '/dev/null');
+my $sep = (win32() ? ';' : ':');
 
 my @deferred_stderr;
 my @deferred_stdout;
@@ -305,11 +306,11 @@ sub callback_build_formats {
 
   # due to KPSE_DOT, we don't search the current directory, so include
   # it explicitly for formats that \write and later on \read
-  $ENV{'TEXINPUTS'} = "$tmpdir:" . ($ENV{'TEXINPUTS'} ? $ENV{'TEXINPUTS'} : "");
+  $ENV{'TEXINPUTS'} = "$tmpdir$sep" . ($ENV{'TEXINPUTS'} ? $ENV{'TEXINPUTS'} : "");
   # for formats that load other formats (e.g., jadetex loads latex.fmt),
   # add the current directory to TEXFORMATS, too.  Currently unnecessary
   # for MFBASES and MPMEMS.
-  $ENV{'TEXFORMATS'} = "$tmpdir:" . ($ENV{'TEXFORMATS'} ? $ENV{'TEXFORMATS'} : "");
+  $ENV{'TEXFORMATS'} = "$tmpdir$sep" . ($ENV{'TEXFORMATS'} ? $ENV{'TEXFORMATS'} : "");
 
   #
   # switch to temporary directory for format generation
@@ -500,7 +501,7 @@ sub rebuild_one_format {
   {
     my $texpool = $ENV{'TEXPOOL'};
     if ($localpool) {
-      $ENV{'TEXPOOL'} = cwd() . ":" . ($texpool ? $texpool : "");
+      $ENV{'TEXPOOL'} = cwd() . $sep . ($texpool ? $texpool : "");
     }
 
     # in mktexfmtMode we need to redirect *all* output to stderr
