@@ -9,6 +9,13 @@
 #
 # History:
 # Original shell script (C) 2001 Thomas Esser, public domain
+#
+# TODO
+# not really here:
+# in main texlive, we need to ensure that the texmf-dist/web2c/fmtutil.cnf
+# file consists only of those formats that are actually installed, 
+# NOT as of now of all!!
+# We are reading ALL fmtutil.cnf now!
 
 my $TEXMFROOT;
 
