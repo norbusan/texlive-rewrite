@@ -1,0 +1,81 @@
+From d40488ad97cd87e7293cf36f04eea0a0dd829310 Mon Sep 17 00:00:00 2001
+From: Norbert Preining <norbert@preining.info>
+Date: Thu, 14 Jan 2016 18:59:16 +0900
+Subject: [PATCH 08/25] introduce ChecksumProgram to compute the checksum
+
+---
+ Master/tlpkg/TeXLive/TLConfig.pm      |  6 ++++++
+ Master/tlpkg/bin/tl-update-containers | 10 +++++-----
+ 2 files changed, 11 insertions(+), 5 deletions(-)
+
+diff --git a/Master/tlpkg/TeXLive/TLConfig.pm b/Master/tlpkg/TeXLive/TLConfig.pm
+index 36850d4..1d3cd19 100644
+--- a/Master/tlpkg/TeXLive/TLConfig.pm
++++ b/Master/tlpkg/TeXLive/TLConfig.pm
+@@ -51,6 +51,7 @@ BEGIN {
+     $PartialEngineSupport
+     $F_OK $F_WARNING $F_ERROR $F_NOPOSTACTION
+     $ChecksumLength
++    $ChecksumProgram
+   );
+   @EXPORT = @EXPORT_OK;
+ }
+@@ -218,6 +219,11 @@ our $F_NOPOSTACTION = 4;
+ # method used in TLUtils::tlchecksum and TLUtils::tldigest
+ $ChecksumLength = 128;
+ 
++# The program generating the checksum for the file given as first
++# argument
++$ChecksumProgram = "sha512sum";
++
++
+ 1;
+ 
+ 
+diff --git a/Master/tlpkg/bin/tl-update-containers b/Master/tlpkg/bin/tl-update-containers
+index 74e4e34..743d18a 100755
+--- a/Master/tlpkg/bin/tl-update-containers
++++ b/Master/tlpkg/bin/tl-update-containers
+@@ -277,7 +277,7 @@ sub main
+             $obj->srccontainersize($s);
+           }
+           if ($m ne "") {
+-            $obj->srccontainersha256($m);
++            $obj->srccontainerchecksum($m);
+           }
+         } else {
+           # no src files in the package, so remove old .source containers
+@@ -300,7 +300,7 @@ sub main
+             $obj->doccontainersize($s);
+           }
+           if ($m ne "") {
+-            $obj->doccontainersha256($m);
++            $obj->doccontainerchecksum($m);
+           }
+         } else {
+           # no doc files in the package, so remove old .doc containers
+@@ -318,7 +318,7 @@ sub main
+         $obj->containersize($s);
+       }
+       if ($m ne "") {
+-        $obj->containersha256($m);
++        $obj->containerchecksum($m);
+       }
+     }
+     # if the container has been build relocatable we save that information
+@@ -385,10 +385,10 @@ sub main
+   chomp (my $olddir = `pwd`);
+   if (chdir("$opt_location/tlpkg/")) {
+     xsystem("md5sum texlive.tlpdb > texlive.tlpdb.md5");
+-    xsystem("sha256sum texlive.tlpdb > texlive.tlpdb.sha256");
++    xsystem("$TeXLive::TLConfig::ChecksumProgram texlive.tlpdb > texlive.tlpdb.checksum");
+     xchdir($olddir);
+   } else {
+-    tlwarn("Cannot chdir to $opt_location/tlpkg/ for md5/sha256 hash creation\n");
++    tlwarn("Cannot chdir to $opt_location/tlpkg/ for md5/checksum hash creation\n");
+   }
+   
+   if (! @ARGV) {
+-- 
+2.7.0
+

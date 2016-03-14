@@ -1,0 +1,27 @@
+From b1ecef817082e7c4d86053c1becb09b9c17691e1 Mon Sep 17 00:00:00 2001
+From: Norbert Preining <norbert@preining.info>
+Date: Mon, 7 Mar 2016 17:39:21 +0900
+Subject: [PATCH 20/25] add signature creations to tl-update-containers (by now
+ non functional)
+
+---
+ Master/tlpkg/bin/tl-update-containers | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/Master/tlpkg/bin/tl-update-containers b/Master/tlpkg/bin/tl-update-containers
+index 743d18a..1c98a85 100755
+--- a/Master/tlpkg/bin/tl-update-containers
++++ b/Master/tlpkg/bin/tl-update-containers
+@@ -386,6 +386,9 @@ sub main
+   if (chdir("$opt_location/tlpkg/")) {
+     xsystem("md5sum texlive.tlpdb > texlive.tlpdb.md5");
+     xsystem("$TeXLive::TLConfig::ChecksumProgram texlive.tlpdb > texlive.tlpdb.checksum");
++    xsystem("echo TODO TODO gpg --homedir PATH/TO/SECRECT_KEY_HOME \
++        --passphrase-file PATH/TO/PASSPHRASE/FILE   \
++        --armor --detach-sign --local-user 0x3E57E2CA1312AC2E texlive.tlpdb");
+     xchdir($olddir);
+   } else {
+     tlwarn("Cannot chdir to $opt_location/tlpkg/ for md5/checksum hash creation\n");
+-- 
+2.7.0
+

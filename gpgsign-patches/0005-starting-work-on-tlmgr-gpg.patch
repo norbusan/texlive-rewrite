@@ -1,0 +1,37 @@
+From eb5e38f2c64a0095d3edb72b0396d95bb8731224 Mon Sep 17 00:00:00 2001
+From: Norbert Preining <norbert@preining.info>
+Date: Mon, 4 Jan 2016 08:32:33 +0900
+Subject: [PATCH 05/25] starting work on tlmgr/gpg
+
+---
+ Master/texmf-dist/scripts/texlive/tlmgr.pl | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/Master/texmf-dist/scripts/texlive/tlmgr.pl b/Master/texmf-dist/scripts/texlive/tlmgr.pl
+index 54a1296..990463e 100755
+--- a/Master/texmf-dist/scripts/texlive/tlmgr.pl
++++ b/Master/texmf-dist/scripts/texlive/tlmgr.pl
+@@ -96,6 +96,7 @@ use TeXLive::TLUtils;
+ use TeXLive::TLWinGoo;
+ use TeXLive::TLDownload;
+ use TeXLive::TLConfFile;
++use TeXLive::GPG;
+ TeXLive::TLUtils->import(qw(member info give_ctan_mirror win32 dirname
+                             mkdirhier copy log debug tlcmp));
+ use TeXLive::TLPaper;
+@@ -5872,6 +5873,12 @@ END_NO_INTERNET
+     }
+   }
+   if (!$local_copy_tlpdb_used) {
++    # TODO verification
++    # here we should add code to download the remote .sha256.gpg (.asc?)
++    # and verify it.
++    my $path = "$location/$InfraLocation/$DatabaseName.sha256.asc";
++    my $fh = TeXLive::TLUtils::download_file($path, "|");
++    # TODO verify ...
+     $remotetlpdb = TeXLive::TLPDB->new(root => $location);
+   }
+   if (!defined($remotetlpdb)) {
+-- 
+2.7.0
+

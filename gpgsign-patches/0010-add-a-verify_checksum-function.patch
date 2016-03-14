@@ -1,0 +1,90 @@
+From b9ff7a09ed0a6b8aef2208cc2df75d5525e18fab Mon Sep 17 00:00:00 2001
+From: Norbert Preining <norbert@preining.info>
+Date: Sat, 20 Feb 2016 23:26:38 +0900
+Subject: [PATCH 10/25] add a verify_checksum function
+
+---
+ Master/tlpkg/TeXLive/TLUtils.pm | 53 +++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 53 insertions(+)
+
+diff --git a/Master/tlpkg/TeXLive/TLUtils.pm b/Master/tlpkg/TeXLive/TLUtils.pm
+index 216836f..5ed6c34 100644
+--- a/Master/tlpkg/TeXLive/TLUtils.pm
++++ b/Master/tlpkg/TeXLive/TLUtils.pm
+@@ -100,6 +100,7 @@ C<TeXLive::TLUtils> -- utilities used in TeX Live infrastructure
+   TeXLive::TLUtils::give_ctan_mirror_base();
+   TeXLive::TLUtils::tlmd5($path);
+   TeXLive::TLUtils::tlchecksum($path);
++  TeXLive::TLUtils::verify_checksum($file, $checksum);
+   TeXLive::TLUtils::compare_tlpobjs($tlpA, $tlpB);
+   TeXLive::TLUtils::compare_tlpdbs($tlpdbA, $tlpdbB);
+   TeXLive::TLUtils::report_tlpdb_differences(\%ret);
+@@ -175,6 +176,7 @@ BEGIN {
+     &extract_mirror_entry
+     &tlmd5
+     &tlchecksum
++    &verify_checksum
+     &wsystem
+     &xsystem
+     &run_cmd
+@@ -3604,6 +3606,57 @@ sub tlchecksum {
+   }
+ }
+ 
++=pod
++
++=item C<< verify_checksum ($file, $checksum) >>
++
++Verifies the checksum of the (already downloaded) file against
++C<$checksum> (which can be a remote URL).
++
++Returns 1 on success, and a pair of 0 and a warning otherwise.
++
++=cut
++
++sub verify_checksum {
++  my ($file, $checksum) = @_;
++  ddebug("verify_checksum: remote path of digest = $checksum\n");
++  my $local_digest;
++  my $remote_digest;
++  my ($cs_fh, $cs_file);
++  my $ret = 1;
++  if ($checksum =~ m,^(http|ftp)://,) {
++    ($cs_fh, $cs_file) = tempfile();
++    # now $cs_fh filehandle is open, the file created
++    # TLUtils::download_file will just overwrite what is there
++    # on windows that doesn't work, so we close the fh immediately
++    # this creates a short loophole, but much better than before anyway
++    close($cs_fh);
++    $ret = download_file($checksum, $cs_file);
++  } else {
++    $cs_file = $checksum;
++  }
++  if ($ret && (-r "$cs_file")) {
++    open $cs_fh "<$cs_file" or return(0, "file not found");
++    if (read ($cs_fh, $remote_digest, $ChecksumLength) != $ChecksumLength) {
++      return(0, "read error");
++    } else {
++      close($cs_fh);
++      ddebug("found remote digest: $remote_digest\n");
++    }
++  } else {
++    return(0, "digest not found");
++  }
++  my $local_digest = tlchecksum($file);
++  ddebug("local_digest = $local_digest\n");
++  if ($local_digest eq $remote_digest) {
++    debug("checksum of local copy identical with remote hash\n");
++    return(1);
++  } else {
++    return(0, "checksum error");
++  }
++  return(0, "not reachable");
++}
++
+ #
+ # compare_tlpobjs 
+ # returns a hash
+-- 
+2.7.0
+

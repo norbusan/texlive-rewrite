@@ -1,0 +1,25 @@
+From 1731d5df09857266f2f88bb6a429cf48c2c5747b Mon Sep 17 00:00:00 2001
+From: Norbert Preining <norbert@preining.info>
+Date: Sat, 20 Feb 2016 23:40:22 +0900
+Subject: [PATCH 12/25] use tlchecksum instead of tlmd5
+
+---
+ Master/tlpkg/TeXLive/TLUtils.pm | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Master/tlpkg/TeXLive/TLUtils.pm b/Master/tlpkg/TeXLive/TLUtils.pm
+index 5ed6c34..2a2564d 100644
+--- a/Master/tlpkg/TeXLive/TLUtils.pm
++++ b/Master/tlpkg/TeXLive/TLUtils.pm
+@@ -1963,7 +1963,7 @@ not agree. Does nothing if neither of the check arguments is given.
+ sub check_file {
+   my ($xzfile, $checksum, $size) = @_;
+   if ($checksum) {
+-    if (tlmd5($xzfile) ne $checksum) {
++    if (tlchecksum($xzfile) ne $checksum) {
+       tlwarn("TLUtils::check_file: found $xzfile, but hashsums differ, removing it.\n");
+       unlink($xzfile);
+       return;
+-- 
+2.7.0
+

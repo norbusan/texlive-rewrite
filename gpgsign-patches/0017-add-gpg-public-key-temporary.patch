@@ -1,0 +1,63 @@
+From 8d5c2defd500f5692b53781810ff7dd667bdd8b9 Mon Sep 17 00:00:00 2001
+From: Norbert Preining <norbert@preining.info>
+Date: Mon, 7 Mar 2016 13:40:02 +0900
+Subject: [PATCH 17/25] add gpg public key (temporary?)
+
+---
+ Master/tlpkg/gpg/pubring.gpg | Bin 0 -> 1206 bytes
+ Master/tlpkg/gpg/secring.gpg |   0
+ Master/tlpkg/gpg/trustdb.gpg | Bin 0 -> 1200 bytes
+ 3 files changed, 0 insertions(+), 0 deletions(-)
+ create mode 100644 Master/tlpkg/gpg/pubring.gpg
+ create mode 100644 Master/tlpkg/gpg/secring.gpg
+ create mode 100644 Master/tlpkg/gpg/trustdb.gpg
+
+diff --git a/Master/tlpkg/gpg/pubring.gpg b/Master/tlpkg/gpg/pubring.gpg
+new file mode 100644
+index 0000000000000000000000000000000000000000..35c557c35f194b2941f074181740591f14bc6439
+GIT binary patch
+literal 1206
+zcmV;n1WEgu0SyFJ-0Oh>2msU72NEe2jMJDJenkS36z(C$7v-)5gMdT@2K=@2$@vS_
+zq}~TiL1%v6w>yg-3!C&%Gb^nB3>WE>T_Lriu#Z;%obEtZ?xSvgKXlp?lt*l$<Di-5
+zzPnmBXvBr;v{xumNbg^ZxVT-6{eOU*(wegq^+^JgK%2J+()Xq=6f}M|3u$xdBZcrj
+znP3_@A?QHH1>Lth$W@5VFoX#m1G>c|fDQ8A<P$+#eC81}lLi36;b7xu-4CVa>Z-mr
+zlGD`0Zfoo+o(}MS+~$<)yoH-x042r(gBs3;$9dtV%h?k0H~j0khOtjO6H(&<r7RsH
+z)7KqD6U;j$;Ubb=YHa`!0RRECFjQq&AWUg?WgtXpb98cPVs&(BZ*Cw<WqBYnFfleD
+zJalDvY-x67Ky-CyE^l&YK8XQ01QP)Y03iheR^01>0viJb3ke7Z0|gZd2?z@X76JnS
+z00JHX0vCV)3JDNCSK`VO609yM83+KwQf2MaVS`e5bnAG-fLiLua>6+QmH!cIG{lf2
+z@O3LaPxUz8_ARgpOgrJN!gw+1O$esz6d_!|5vL62-T)x^p2?W5?Cpt6>oWToEcw${
+zTJTrPTE?CsPVF`lNX6T?8hdBc@)-$j=m+3%nLR#Y<{M<9mLihZ?Xb3ic7e1yvneef
+zFJafCsf?thFQk;$|Kj7kshm?`jo$&{^<M{<{*hLlJH96pmbBX6X=D?CktmLyooZtB
+zJy7^W@;vm=4d}he3V5&JSarFdrQG4qQ>B%762pLvqY&gl=KctAk9uhW7B{vSIt~KH
+zgEfP*)?dvhiS%u0q-O;;yCLVW0ssTK0SyFJ-0Oh>2mr5{Rdt!1WAJbXJ|Wii!C5Zu
+z2{3@p$U(2@5X6vX|9}8&Xoe{w2_H=M{>k$Ml+kl+8R0<{!Fv`{<!fPk<Y&7hJgRt!
+zWmf^|5G;t{1j<p%E^2nCa>ptC3);O+UsR4ENhrZKr>QZ>9#VA-eDr;z{V)&t%LP)i
+zlsE@i5cKxoRzZ77;Q2v#Zv!@{TwW&a`F&9ZG~1I`%^}!4F}$$R`%7*~xF$Kl7R%)w
+zELuwhm6%6rGVKRMb8g-FlsPjC4*t`EKnaf&2IRD`wGtaa!|VD5WsC8Cj3uG4zxwS0
+zai^BzjbWA}H*HVo4SGL19!X*cIO2SoLig(a0w(|w0RRDs0Urby0SW*K1p-#w>wy9r
+z3;+rV5I$Gp$`cZ-F2no>|5IVVR#V~j2vYg&Y;sHY+t14Xv0tMi77j&L?V?bVa!t^Z
+z>S0ng3-`<{$uPGS;Z-Qa-ZdW{*JkTF%d{v`SkKw!qTRkEb94iV6J|Up4s0>d#F-cS
+zC?vpj;m;b(jz%jINuN302hKea0-dpqTF{uXL#YE=GzVeC<Uak2jg8fMlm$k{9;KC3
+zt~FSj$%aX2*|=iCq0SYIJOy?_(E|w3p5$fUwS3XW-!zKIGvJ%+na}&_D|hKS81{11
+zJ7z!pYwADTuZ68bJRU@eMksRxbip}3`B{%tr!N8Bon0XKzmA4%jJ!lds_afzBT^P?
+U<cxJIoa4h^9Ycs4bg%*d13+gckpKVy
+
+literal 0
+HcmV?d00001
+
+diff --git a/Master/tlpkg/gpg/secring.gpg b/Master/tlpkg/gpg/secring.gpg
+new file mode 100644
+index 0000000..e69de29
+diff --git a/Master/tlpkg/gpg/trustdb.gpg b/Master/tlpkg/gpg/trustdb.gpg
+new file mode 100644
+index 0000000000000000000000000000000000000000..f4f478488d24016b9e3c7f4e956fb3918f016dd3
+GIT binary patch
+literal 1200
+zcmZQfFGy!*W@Ke#Vqgfn^TVG3J7DC(E{-8OstzMazyhP;G8!(R5ExAdl%)dzLZ$@k
+
+literal 0
+HcmV?d00001
+
+-- 
+2.7.0
+

@@ -1,0 +1,88 @@
+From f1b7f63d7dc6f33a26e3443e2000fb4c240906b0 Mon Sep 17 00:00:00 2001
+From: Norbert Preining <norbert@preining.info>
+Date: Thu, 25 Feb 2016 16:16:28 +0900
+Subject: [PATCH 14/25] TLUtils: new function: setup_gpg
+
+---
+ Master/tlpkg/TeXLive/TLUtils.pm | 37 +++++++++++++++++++++++++++++++++----
+ 1 file changed, 33 insertions(+), 4 deletions(-)
+
+diff --git a/Master/tlpkg/TeXLive/TLUtils.pm b/Master/tlpkg/TeXLive/TLUtils.pm
+index fc542e0..5753f83 100644
+--- a/Master/tlpkg/TeXLive/TLUtils.pm
++++ b/Master/tlpkg/TeXLive/TLUtils.pm
+@@ -101,6 +101,7 @@ C<TeXLive::TLUtils> -- utilities used in TeX Live infrastructure
+   TeXLive::TLUtils::tlmd5($path);
+   TeXLive::TLUtils::tlchecksum($path);
+   TeXLive::TLUtils::verify_checksum($file, $checksum);
++  TeXLive::TLUtils::setup_gpg();
+   TeXLive::TLUtils::verify_download($file, $url);
+   TeXLive::TLUtils::compare_tlpobjs($tlpA, $tlpB);
+   TeXLive::TLUtils::compare_tlpdbs($tlpdbA, $tlpdbB);
+@@ -178,6 +179,7 @@ BEGIN {
+     &tlmd5
+     &tlchecksum
+     &verify_checksum
++    &setup_gpg
+     &verify_download
+     &wsystem
+     &xsystem
+@@ -3661,6 +3663,35 @@ sub verify_checksum {
+ 
+ =pod
+ 
++=item C<< setup_gpg() >>
++
++Tries to set up the global TeXLive::GPG instance C<$::gpg> used for
++verification of downloads.
++
++Returns 1/0 on success/failure.
++
++=cut
++
++sub setup_gpg {
++  my $master = shift;
++  # first search for a gpg binary
++  return 0 if (setup_unix_one( 'gpg' , '/no/such/path', '--version', 1));
++  # ok, we found one
++  $::gpg = new Crypt::GPG;
++  $gpg->gpgbin($::progs{'gpg'});
++  # now we need to set up GNUPGHOME to make sure that gpg uses the
++  # right codes
++  if ($ENV{'TL_GNUPGHOME'}) {
++    # the user wants us to use this directory, sure, do it
++    $ENV{'GNUPGHOME'} = $ENV{'TL_GNUPGHOME'};
++  } else {
++    $ENV{'GNUPGHOME'} = "$master/tlpkg/gpg";
++  }
++  return 1;
++}
++
++=pod
++
+ =item C<< verify_download($file, $url) >>
+ 
+ Verifies a download of C<$url> into C<$file> by checking C<$url.checksum>
+@@ -3683,9 +3714,7 @@ sub verify_download {
+   return($ret,$mst) if (!$ret);
+   # next try to verify gpg
+   $ret = 1; # default for gpg download
+-  if ($::progs{'gpg'}) {
+-    my $gpg = new Crypt::GPG;
+-    $gpg->gpgbin($::progs{'gpg'});
++  if ($::gpg) {
+     my $urlgpg = "$url.asc";
+     my ($gpg_fh, $gpg_file);
+     if ($gpg =~ m,^(http|ftp|file)://,) {
+@@ -3700,7 +3729,7 @@ sub verify_download {
+       $gpg_file = $urlgpg;
+     }
+     if ($ret && (-r "$gpg_file")) {
+-      my ($plaintext, $signature) = $gpg->verify($file, $gpg_file);
++      my ($plaintext, $signature) = $::gpg->verify($file, $gpg_file);
+       if ($signature->validity ne "GOOD") {
+         tldie(<<GPGERROR);
+ Verification of downloaded file
+-- 
+2.7.0
+

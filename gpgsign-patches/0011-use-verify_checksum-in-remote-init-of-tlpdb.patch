@@ -1,0 +1,71 @@
+From 27dd4a1a3b531f7c4a92bd5311d1e845e8ccd973 Mon Sep 17 00:00:00 2001
+From: Norbert Preining <norbert@preining.info>
+Date: Sat, 20 Feb 2016 23:38:20 +0900
+Subject: [PATCH 11/25] use verify_checksum in remote init of tlpdb
+
+---
+ Master/texmf-dist/scripts/texlive/tlmgr.pl | 33 +++++++++++++-----------------
+ 1 file changed, 14 insertions(+), 19 deletions(-)
+
+diff --git a/Master/texmf-dist/scripts/texlive/tlmgr.pl b/Master/texmf-dist/scripts/texlive/tlmgr.pl
+index 3144bd9..74d3c8b 100755
+--- a/Master/texmf-dist/scripts/texlive/tlmgr.pl
++++ b/Master/texmf-dist/scripts/texlive/tlmgr.pl
+@@ -5840,10 +5840,11 @@ sub setup_one_remotetlpdb {
+       # check for the remote hash
+       my $path = "$location/$InfraLocation/$DatabaseName.checksum";
+       ddebug("remote path of digest = $path\n");
+-      my $fh = TeXLive::TLUtils::download_file($path, "|");
+-      my $rem_digest;
+-      if (read ($fh, $rem_digest, $ChecksumLength) != $ChecksumLength) {
+-        info(<<END_NO_INTERNET);
++
++      my ($ret, $msg) = TeXLive::TLUtils::verify_checksum($loc_copy_of_remote_tlpdb, $path);
++      if (!$ret) {
++        if (($msg eq "file not found") || (msg eq "read error") || ($msg eq "digest not found")) {
++          info(<<END_NO_INTERNET);
+ No connection to the internet.
+ Unable to download the checksum of the remote TeX Live database,
+ but found a local copy so using that.
+@@ -5856,29 +5857,23 @@ http://tug.org/texlive/doc/install-tl.html
+ END_NO_INTERNET
+         # above text duplicated in install-tl
+ 
+-        $remotetlpdb = TeXLive::TLPDB->new(root => $location,
+-          tlpdbfile => $loc_copy_of_remote_tlpdb);
+-        $local_copy_tlpdb_used = 1;
+-      } else {
+-        ddebug("found remote digest: $rem_digest\n");
+-        my $rem_copy_digest = TeXLive::TLUtils::tlchecksum($loc_copy_of_remote_tlpdb);
+-        ddebug("rem_copy_digest = $rem_copy_digest\n");
+-        if ($rem_copy_digest eq $rem_digest) {
+-          debug("checksum of local copy identical with remote hash\n");
+           $remotetlpdb = TeXLive::TLPDB->new(root => $location,
+             tlpdbfile => $loc_copy_of_remote_tlpdb);
+           $local_copy_tlpdb_used = 1;
++        } elsif ($msg eq "checksum error") {
++          # no problem, reload it!
++        } else {
++          tlwarn("Unknown return message from verify_checksum: $msg\n");
+         }
++      } else {
++        debug("checksum of local copy identical with remote hash\n");
++        $remotetlpdb = TeXLive::TLPDB->new(root => $location,
++          tlpdbfile => $loc_copy_of_remote_tlpdb);
++        $local_copy_tlpdb_used = 1;
+       }
+     }
+   }
+   if (!$local_copy_tlpdb_used) {
+-    # TODO verification
+-    # here we should add code to download the remote .checksum.gpg (.asc?)
+-    # and verify it.
+-    my $path = "$location/$InfraLocation/$DatabaseName.checksum.asc";
+-    my $fh = TeXLive::TLUtils::download_file($path, "|");
+-    # TODO verify ...
+     $remotetlpdb = TeXLive::TLPDB->new(root => $location);
+   }
+   if (!defined($remotetlpdb)) {
+-- 
+2.7.0
+

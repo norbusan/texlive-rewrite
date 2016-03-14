@@ -1,0 +1,25 @@
+From 88359ed7d48eb99bd23b6665ef292877f641275c Mon Sep 17 00:00:00 2001
+From: Norbert Preining <norbert@preining.info>
+Date: Mon, 7 Mar 2016 18:28:58 +0900
+Subject: [PATCH 23/25] tl-update-containers needs to sign the checksum file
+
+---
+ Master/tlpkg/bin/tl-update-containers | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Master/tlpkg/bin/tl-update-containers b/Master/tlpkg/bin/tl-update-containers
+index 1c98a85..ba516ae 100755
+--- a/Master/tlpkg/bin/tl-update-containers
++++ b/Master/tlpkg/bin/tl-update-containers
+@@ -388,7 +388,7 @@ sub main
+     xsystem("$TeXLive::TLConfig::ChecksumProgram texlive.tlpdb > texlive.tlpdb.checksum");
+     xsystem("echo TODO TODO gpg --homedir PATH/TO/SECRECT_KEY_HOME \
+         --passphrase-file PATH/TO/PASSPHRASE/FILE   \
+-        --armor --detach-sign --local-user 0x3E57E2CA1312AC2E texlive.tlpdb");
++        --armor --detach-sign --local-user 0x3E57E2CA1312AC2E texlive.tlpdb.checksum");
+     xchdir($olddir);
+   } else {
+     tlwarn("Cannot chdir to $opt_location/tlpkg/ for md5/checksum hash creation\n");
+-- 
+2.7.0
+

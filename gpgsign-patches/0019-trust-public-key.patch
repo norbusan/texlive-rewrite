@@ -1,0 +1,23 @@
+From 9d60414c3a849ff8a97c05b67d6d28ea54198968 Mon Sep 17 00:00:00 2001
+From: Norbert Preining <norbert@preining.info>
+Date: Mon, 7 Mar 2016 17:29:18 +0900
+Subject: [PATCH 19/25] trust public key
+
+---
+ Master/tlpkg/gpg/trustdb.gpg | Bin 1200 -> 1280 bytes
+ 1 file changed, 0 insertions(+), 0 deletions(-)
+
+diff --git a/Master/tlpkg/gpg/trustdb.gpg b/Master/tlpkg/gpg/trustdb.gpg
+index f4f478488d24016b9e3c7f4e956fb3918f016dd3..0ca85af83284ff5c2d884c7fb1759ee2f0fe36a1 100644
+GIT binary patch
+literal 1280
+zcmZQfFGy!*W@Ke#VqgfnYjU0eJ7DC(E{-8OstzMazyhP;G8!(R5Ezl^Kn{D{Ba0Fn
+zE<6mM7o9J+yO%P%xoEYQUHGF@!a{5G*dRv9BTVFFxa=yC7vFt6ygu}>_Ufh9rYqyb
+L-a^$OlraDRXq6aT
+
+delta 31
+mcmZqR+Q2Emm|l?1%*@Ej$i%=9cISuxL__h7>UJy>YrO$?cnD_z
+
+-- 
+2.7.0
+

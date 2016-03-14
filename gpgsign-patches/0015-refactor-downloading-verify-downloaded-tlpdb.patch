@@ -1,0 +1,131 @@
+From a074b7db5f2d25bd5fd77c5f0d6ecd74ba39935b Mon Sep 17 00:00:00 2001
+From: Norbert Preining <norbert@preining.info>
+Date: Mon, 7 Mar 2016 11:24:57 +0900
+Subject: [PATCH 15/25] refactor downloading, verify downloaded tlpdb
+
+---
+ Master/tlpkg/TeXLive/TLPDB.pm   | 57 ++++++++++++++++++++++-------------------
+ Master/tlpkg/TeXLive/TLUtils.pm |  8 +-----
+ 2 files changed, 31 insertions(+), 34 deletions(-)
+
+diff --git a/Master/tlpkg/TeXLive/TLPDB.pm b/Master/tlpkg/TeXLive/TLPDB.pm
+index 2ddc7cd..0b56723 100644
+--- a/Master/tlpkg/TeXLive/TLPDB.pm
++++ b/Master/tlpkg/TeXLive/TLPDB.pm
+@@ -299,31 +299,30 @@ sub from_file {
+   # actually load the TLPDB
+   if ($path =~ m;^((http|ftp)://|file:\/\/*);) {
+     debug("TLPDB.pm: trying to initialize from $path\n");
++    # now $xzfh filehandle is open, the file created
++    # TLUtils::download_file will just overwrite what is there
++    # on windows that doesn't work, so we close the fh immediately
++    # this creates a short loophole, but much better than before anyway
++    my $tlpdbfh;
++    ($tlpdbfh, $tlpdbfile) = tempfile();
++    # same as above
++    close($tlpdbfh);
++    my $tlpdbfile_quote = $tlpdbfile;
++    if (win32()) {
++      $tlpdbfile =~ s!/!\\!g;
++    }
++    $tlpdbfile_quote = "\"$tlpdbfile\"";
+     # if we have xzdec available we try the xz file
++    my $xz_succeeded = 0 ;
+     if (defined($::progs{'xzdec'})) {
+       # we first try the xz compressed file
+-      #
+-      # we have to create a temp file to download to
+       my ($xzfh, $xzfile) = tempfile();
+-      # now $xzfh filehandle is open, the file created
+-      # TLUtils::download_file will just overwrite what is there
+-      # on windows that doesn't work, so we close the fh immediately
+-      # this creates a short loophole, but much better than before anyway
+       close($xzfh);
+       my $xzfile_quote = $xzfile;
+-      # this is a variable of the whole sub as we have to remove the file
+-      # before returning
+-      my $tlpdbfh;
+-      ($tlpdbfh, $tlpdbfile) = tempfile();
+-      # same as above
+-      close($tlpdbfh);
+-      my $tlpdbfile_quote = $tlpdbfile;
+       if (win32()) {
+         $xzfile  =~ s!/!\\!g;
+-        $tlpdbfile =~ s!/!\\!g;
+       }
+       $xzfile_quote = "\"$xzfile\"";
+-      $tlpdbfile_quote = "\"$tlpdbfile\"";
+       my $xzdec = TeXLive::TLUtils::quotify_path_with_spaces($::progs{'xzdec'});
+       debug("trying to download $path.xz to $xzfile\n");
+       my $ret = TeXLive::TLUtils::download_file("$path.xz", "$xzfile");
+@@ -338,29 +337,33 @@ sub from_file {
+           debug("un-xzing $xzfile failed, trying plain file\n");
+           # to be sure we unlink the xz file and the tlpdbfile
+           unlink($xzfile);
+-          unlink($tlpdbfile);
+         } else {
+           unlink($xzfile);
+-          # verify checksum
+-          # TODO TODO TODO VERIFY
+-          # either here, but we need to do the same alos 10lines down
+-          # there when downloading the tlpdb file directly into a pipe!!!
+-          #TeXLive::TLUtils::verify_download($tlpdbfile, $path);
+-          open($retfh, "<$tlpdbfile") || die "$0: open($tlpdbfile) failed: $!";
++          $xz_succeeded = 1;
+           debug("found the uncompressed xz file\n");
+         }
+       } 
+     } else {
+       debug("no xzdec defined, not trying tlpdb.xz ...\n");
+     }
+-    if (!defined($retfh)) {
++    if (!$xz_succeeded) {
+       debug("TLPDB: downloading $path.xz didn't succeed, try $path\n");
+-      # xz did not succeed, so try the normal file
+-      $retfh = TeXLive::TLUtils::download_file($path, "|");
+-      if (!$retfh) {
+-        die "open tlpdb($path) failed: $!";
++      my $ret = TeXLive::TLUtils::download_file($path, $tlpdbfile);
++      # better to check both, the return value AND the existence of the file
++      if ($ret && (-r "$tlpdbfile")) {
++        # do nothing
++      } else {
++        unlink($tlpdbfile);
++        die "$0: open tlpdb($path) failed: $!";
+       }
+     }
++    # if we are still here, then either the xz version was downloaded
++    # and unpacked, or the non-xz version was downloaded, and in both
++    # cases the result, i.e., the unpackaged tlpdb, is in $tlpdbfile
++    #
++    # before we open and proceed, verify the downloaded file
++    TeXLive::TLUtils::verify_download($tlpdbfile, $path);
++    open($retfh, "<$tlpdbfile") || die "$0: open($tlpdbfile) failed: $!";
+   } else {
+     open(TMP, "<$path") || die "$0: open($path) failed: $!";
+     $retfh = \*TMP;
+diff --git a/Master/tlpkg/TeXLive/TLUtils.pm b/Master/tlpkg/TeXLive/TLUtils.pm
+index 5753f83..93b27c6 100644
+--- a/Master/tlpkg/TeXLive/TLUtils.pm
++++ b/Master/tlpkg/TeXLive/TLUtils.pm
+@@ -3702,16 +3702,10 @@ Returns 1 on success, and a pair of 0 and a warning otherwise.
+ =cut
+ 
+ sub verify_download {
+-  
+-  # TODO TODO
+-  # we need to set gpg parameters!!!
+-
+-  die("GPG PARAMEters need to be set!!!\n");
+-
+   my ($file, $url) = @_;
+   # first verify digest
+   my ($ret, $msg) = verify_checksum($file, "$url.checksum");
+-  return($ret,$mst) if (!$ret);
++  return($ret,$msg) if (!$ret);
+   # next try to verify gpg
+   $ret = 1; # default for gpg download
+   if ($::gpg) {
+-- 
+2.7.0
+

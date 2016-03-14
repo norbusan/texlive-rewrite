@@ -1,0 +1,120 @@
+From 4771d60124a860dcec77252e69e8ece87d57bd60 Mon Sep 17 00:00:00 2001
+From: Norbert Preining <norbert@preining.info>
+Date: Mon, 7 Mar 2016 18:46:36 +0900
+Subject: [PATCH 24/25] reintroduce verify_checksum, single out code, adapt
+ tlmgr
+
+tlmgr uses verify_checksum to verify the downloaded tlpdb copy
+with the remote checksum to reduce loading time. Reintroduce
+verify_checksum, single out the code from verify_download,
+and adjust tlmgr to new calling convention that second
+argument is already the url for the checksum
+---
+ Master/texmf-dist/scripts/texlive/tlmgr.pl |  2 +-
+ Master/tlpkg/TeXLive/TLUtils.pm            | 56 ++++++++++++++++++++----------
+ 2 files changed, 39 insertions(+), 19 deletions(-)
+
+diff --git a/Master/texmf-dist/scripts/texlive/tlmgr.pl b/Master/texmf-dist/scripts/texlive/tlmgr.pl
+index 2f50ee2..99e1711 100755
+--- a/Master/texmf-dist/scripts/texlive/tlmgr.pl
++++ b/Master/texmf-dist/scripts/texlive/tlmgr.pl
+@@ -5848,7 +5848,7 @@ sub setup_one_remotetlpdb {
+       my $path = "$location/$InfraLocation/$DatabaseName.checksum";
+       ddebug("remote path of digest = $path\n");
+ 
+-      my ($ret, $msg) = TeXLive::TLUtils::verify_checksum($loc_copy_of_remote_tlpdb, $path);
++      my ($ret, $msg) = TeXLive::TLUtils::verify_checksum($loc_copy_of_remote_tlpdb, "$path.checksum");
+       if (!$ret) {
+         if (($msg eq "file not found") || ($msg eq "read error") || ($msg eq "digest not found")) {
+           info(<<END_NO_INTERNET);
+diff --git a/Master/tlpkg/TeXLive/TLUtils.pm b/Master/tlpkg/TeXLive/TLUtils.pm
+index c929049..b255588 100644
+--- a/Master/tlpkg/TeXLive/TLUtils.pm
++++ b/Master/tlpkg/TeXLive/TLUtils.pm
+@@ -101,6 +101,7 @@ C<TeXLive::TLUtils> -- utilities used in TeX Live infrastructure
+   TeXLive::TLUtils::tlmd5($path);
+   TeXLive::TLUtils::tlchecksum($path);
+   TeXLive::TLUtils::setup_gpg();
++  TeXLive::TLUtils::verify_checksum($file, $url);
+   TeXLive::TLUtils::verify_download($file, $url);
+   TeXLive::TLUtils::compare_tlpobjs($tlpA, $tlpB);
+   TeXLive::TLUtils::compare_tlpdbs($tlpdbA, $tlpdbB);
+@@ -178,6 +179,7 @@ BEGIN {
+     &tlmd5
+     &tlchecksum
+     &setup_gpg
++    &verify_checksum
+     &verify_download
+     &wsystem
+     &xsystem
+@@ -3672,6 +3674,41 @@ sub slurp_file {
+ 
+ =pod
+ 
++=item C<< verify_checksum($file, $checksum_url) >>
++
++Verifies that C<$file> has cecksum C<$checksum_url>.
++
++Returns 1 on success, and a pair of 0 and a warning otherwise.
++
++=cut
++
++sub verify_checksum {
++  my ($file, $checksum_url) = @_;
++  my $checksum_file = download_to_temp_or_file($checksum_url);
++  # next step is verification of tlpdb checksum with checksum file
++  # existenc of checksum_file was checked above
++  open $cs_fh, "<$checksum_file" or die("cannot read file: $!");
++  if (read ($cs_fh, $remote_digest, $ChecksumLength) != $ChecksumLength) {
++    close($cs_fh);
++    return(0, "read error from $checksum_file");
++  } else {
++    close($cs_fh);
++    ddebug("found remote digest: $remote_digest\n");
++  }
++  $local_digest = tlchecksum($file);
++  ddebug("local_digest = $local_digest\n");
++  if ($local_digest ne $remote_digest) {
++    return(0, "checksum error");
++  }
++
++  # we are still here, so checksum also succeeded
++  debug("checksum of local copy identical with remote hash\n");
++
++  return(1);
++}
++
++=pod
++
+ =item C<< verify_download($file, $url) >>
+ 
+ Verifies a download of C<$url> into C<$file> by checking C<$url.checksum>
+@@ -3741,24 +3778,7 @@ GPGERROR
+ 
+   # next step is verification of tlpdb checksum with checksum file
+   # existenc of checksum_file was checked above
+-  open $cs_fh, "<$checksum_file" or die("cannot read file: $!");
+-  if (read ($cs_fh, $remote_digest, $ChecksumLength) != $ChecksumLength) {
+-    close($cs_fh);
+-    return(0, "read error from $checksum_file");
+-  } else {
+-    close($cs_fh);
+-    ddebug("found remote digest: $remote_digest\n");
+-  }
+-  $local_digest = tlchecksum($file);
+-  ddebug("local_digest = $local_digest\n");
+-  if ($local_digest ne $remote_digest) {
+-    return(0, "checksum error");
+-  }
+-
+-  # we are still here, so checksum also succeeded
+-  debug("checksum of local copy identical with remote hash\n");
+-
+-  return(1);
++  return verify_checksum($file, $checksum_file);
+ }
+ 
+ sub gpg_verify_signature {
+-- 
+2.7.0
+

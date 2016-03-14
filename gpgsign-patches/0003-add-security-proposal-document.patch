@@ -1,0 +1,81 @@
+From 5b60d50f3497dd859f248a0442180c25ce33c3f4 Mon Sep 17 00:00:00 2001
+From: Norbert Preining <norbert@preining.info>
+Date: Sun, 3 Jan 2016 13:56:13 +0900
+Subject: [PATCH 03/25] add security proposal document
+
+---
+ Master/tlpkg/doc/tl-security-proposal.txt | 62 +++++++++++++++++++++++++++++++
+ 1 file changed, 62 insertions(+)
+ create mode 100644 Master/tlpkg/doc/tl-security-proposal.txt
+
+diff --git a/Master/tlpkg/doc/tl-security-proposal.txt b/Master/tlpkg/doc/tl-security-proposal.txt
+new file mode 100644
+index 0000000..87c9296
+--- /dev/null
++++ b/Master/tlpkg/doc/tl-security-proposal.txt
+@@ -0,0 +1,62 @@
++Security Proposal for TeX Live
++==============================
++(last change NP 2016-01-03)
++
++We use md5 sums in the following places:
++1) md5sum of the texlive.tlpdb in texlive.tlpdb.md5 in tlnet/tlcritical
++   and all the normal dists
++2) md5 sum of *location* string of remote end
++   - if the database is present (tlpkg/texlive.tlpdb.MD5SUM) and the
++     md5sum downloaded from 1) and the saved md5sum agree, do not
++     redownload the remote tlpdb but use local copy
++3) md5sum of containers (.tar.xz)
++   are checked now only during installation, after my commit also
++   from tlmgr
++
++It would make sense to replace some or all of the above with sha256.
++2) is the only one we could keep as md5, but I propose that if
++we switch, then we switch all the md5 to sha256.
++
++In principle my idea about security setup is as follows:
++
++For the installer
++* installer packages are sha256 hashed (already done!)
++* the sha256 files are gpg signed with our gpg tlnet key
++* our public gpg key is included in texlive.infra package
++
++For the rest (installation or update from remote)
++* install-tl/tlmgr downloads the texlive.sha256.gpg and
++  texlive.sha256
++* verifies that this is ok
++* if yes, download the texlive.tlpdb and check the sha256
++  value of it (this is the reason we should switch from
++  md5 to sha256, as md5 is AFAIR fakeable)
++* if all succeed, do the usual verification of each
++  container only by sha256 (instead of md5)
++
++There is no need to sign each container, as we are having
++indirectly signed sha256 hashes of the containers
++(in the tlpdb, which is sha256-ed, and then signed).
++
++
++Transition notes:
++* I would like to have a start on this already *before*
++  2016, but during 2015 we would have:
++  - if gpg is not available, or remote .sha256.gpg is not
++    available, silently continue (same behaviour as now)
++  After 2016 I suggest that if either of the above two
++  fail (gpg not available, or remote .sha256.gpg not
++  found), then tlmgr stops - unless --no-verification is
++  passed in or set in the tlmgr configuration file.
++* At least till after 2016 is released we need to generate
++  both texlvie.tlpdb.md5 and .sha256 on the remote server,
++  otherwise updates from versions before cannot verify
++  (hmm, maybe they can - as we do not break if there is
++  no md5 sum available - so maybe this is not necessary
++  at all and we can simply switch without any problem!)
++* gpg binaries:
++  for windows I guess we have to ship it, for all others
++  we should be able to assume that it is there. Those
++  who do not have access to gpg need to set --no-verification
++  in the configuration file.
++
+-- 
+2.7.0
+

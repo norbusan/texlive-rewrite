@@ -1,0 +1,55 @@
+From fa1da4b2617c39f6da6c69645eafb12b785c8d17 Mon Sep 17 00:00:00 2001
+From: Norbert Preining <norbert@preining.info>
+Date: Mon, 4 Jan 2016 11:23:45 +0900
+Subject: [PATCH 06/25] adjust security document according to kb suggestions
+
+---
+ Master/tlpkg/doc/tl-security-proposal.txt | 28 ++++++----------------------
+ 1 file changed, 6 insertions(+), 22 deletions(-)
+
+diff --git a/Master/tlpkg/doc/tl-security-proposal.txt b/Master/tlpkg/doc/tl-security-proposal.txt
+index 87c9296..83f9b32 100644
+--- a/Master/tlpkg/doc/tl-security-proposal.txt
++++ b/Master/tlpkg/doc/tl-security-proposal.txt
+@@ -1,6 +1,6 @@
+ Security Proposal for TeX Live
+ ==============================
+-(last change NP 2016-01-03)
++(last change NP 2016-01-04)
+ 
+ We use md5 sums in the following places:
+ 1) md5sum of the texlive.tlpdb in texlive.tlpdb.md5 in tlnet/tlcritical
+@@ -38,25 +38,9 @@ There is no need to sign each container, as we are having
+ indirectly signed sha256 hashes of the containers
+ (in the tlpdb, which is sha256-ed, and then signed).
+ 
+-
+-Transition notes:
+-* I would like to have a start on this already *before*
+-  2016, but during 2015 we would have:
+-  - if gpg is not available, or remote .sha256.gpg is not
+-    available, silently continue (same behaviour as now)
+-  After 2016 I suggest that if either of the above two
+-  fail (gpg not available, or remote .sha256.gpg not
+-  found), then tlmgr stops - unless --no-verification is
+-  passed in or set in the tlmgr configuration file.
+-* At least till after 2016 is released we need to generate
+-  both texlvie.tlpdb.md5 and .sha256 on the remote server,
+-  otherwise updates from versions before cannot verify
+-  (hmm, maybe they can - as we do not break if there is
+-  no md5 sum available - so maybe this is not necessary
+-  at all and we can simply switch without any problem!)
+-* gpg binaries:
+-  for windows I guess we have to ship it, for all others
+-  we should be able to assume that it is there. Those
+-  who do not have access to gpg need to set --no-verification
+-  in the configuration file.
++Usage:
++* if gpg is found, try to use it, otherwise just
++  give warning about how to verify/gpg necessary
++* only if gpg is available, download .sha256.asc and
++  verify
+ 
+-- 
+2.7.0
+

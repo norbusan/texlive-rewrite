@@ -1,0 +1,189 @@
+From 286184291cc00735ad6cbb0786140be157a0b17c Mon Sep 17 00:00:00 2001
+From: Norbert Preining <norbert@preining.info>
+Date: Mon, 7 Mar 2016 12:41:51 +0900
+Subject: [PATCH 16/25] gpg signature check working
+
+---
+ Master/install-tl               |  7 ++++++
+ Master/tlpkg/TeXLive/TLPDB.pm   |  5 +++-
+ Master/tlpkg/TeXLive/TLUtils.pm | 52 ++++++++++++++++++++++++++++++-----------
+ 3 files changed, 50 insertions(+), 14 deletions(-)
+
+diff --git a/Master/install-tl b/Master/install-tl
+index 121a556..fd6be53 100755
+--- a/Master/install-tl
++++ b/Master/install-tl
+@@ -338,6 +338,13 @@ if ($opt_print_arch) {
+   exit 0;
+ }
+ 
++# try to setup gpg
++if (TeXLive::TLUtils::setup_gpg($::installerdir)) {
++  log("Trying to verify cryptographic signatures!\n")
++} else {
++  tlwarn("Setting up gpg did not succeed!\n");
++}
++
+ 
+ # continuing with normal install
+ 
+diff --git a/Master/tlpkg/TeXLive/TLPDB.pm b/Master/tlpkg/TeXLive/TLPDB.pm
+index 0b56723..8dc0044 100644
+--- a/Master/tlpkg/TeXLive/TLPDB.pm
++++ b/Master/tlpkg/TeXLive/TLPDB.pm
+@@ -362,7 +362,10 @@ sub from_file {
+     # cases the result, i.e., the unpackaged tlpdb, is in $tlpdbfile
+     #
+     # before we open and proceed, verify the downloaded file
+-    TeXLive::TLUtils::verify_download($tlpdbfile, $path);
++    my ($r, $m) = TeXLive::TLUtils::verify_download($tlpdbfile, $path);
++    if (!$r) {
++      tldie("$0: verification of $tlpdbfile from $path failed ($r): $m\n");
++    }
+     open($retfh, "<$tlpdbfile") || die "$0: open($tlpdbfile) failed: $!";
+   } else {
+     open(TMP, "<$path") || die "$0: open($path) failed: $!";
+diff --git a/Master/tlpkg/TeXLive/TLUtils.pm b/Master/tlpkg/TeXLive/TLUtils.pm
+index 93b27c6..af16755 100644
+--- a/Master/tlpkg/TeXLive/TLUtils.pm
++++ b/Master/tlpkg/TeXLive/TLUtils.pm
+@@ -212,6 +212,7 @@ use Getopt::Long;
+ use File::Temp;
+ 
+ use TeXLive::TLConfig;
++use TeXLive::GPG;
+ 
+ $::opt_verbosity = 0;  # see process_logging_options
+ 
+@@ -3610,6 +3611,13 @@ sub tlchecksum {
+   }
+ }
+ 
++sub tlchecksum_data {
++  my ($data) = @_;
++  my $cshash = Digest::SHA->new(512)->add($data)->hexdigest;
++  return $cshash;
++}
++
++
+ =pod
+ 
+ =item C<< verify_checksum ($file, $checksum) >>
+@@ -3622,14 +3630,14 @@ Returns 1 on success, and a pair of 0 and a warning otherwise.
+ =cut
+ 
+ sub verify_checksum {
+-  my ($file, $checksum) = @_;
++  my ($file_data, $checksum) = @_;
+   ddebug("verify_checksum: remote path of digest = $checksum\n");
+   my $local_digest;
+   my $remote_digest;
+   my ($cs_fh, $cs_file);
+   my $ret = 1;
+   if ($checksum =~ m,^(http|ftp)://,) {
+-    ($cs_fh, $cs_file) = tempfile();
++    ($cs_fh, $cs_file) = File::Temp::tempfile();
+     # now $cs_fh filehandle is open, the file created
+     # TLUtils::download_file will just overwrite what is there
+     # on windows that doesn't work, so we close the fh immediately
+@@ -3640,7 +3648,7 @@ sub verify_checksum {
+     $cs_file = $checksum;
+   }
+   if ($ret && (-r "$cs_file")) {
+-    open $cs_fh "<$cs_file" or return(0, "file not found");
++    open $cs_fh, "<$cs_file" or return(0, "file not found");
+     if (read ($cs_fh, $remote_digest, $ChecksumLength) != $ChecksumLength) {
+       return(0, "read error");
+     } else {
+@@ -3650,7 +3658,7 @@ sub verify_checksum {
+   } else {
+     return(0, "digest not found");
+   }
+-  my $local_digest = tlchecksum($file);
++  $local_digest = tlchecksum_data($file_data);
+   ddebug("local_digest = $local_digest\n");
+   if ($local_digest eq $remote_digest) {
+     debug("checksum of local copy identical with remote hash\n");
+@@ -3675,10 +3683,10 @@ Returns 1/0 on success/failure.
+ sub setup_gpg {
+   my $master = shift;
+   # first search for a gpg binary
+-  return 0 if (setup_unix_one( 'gpg' , '/no/such/path', '--version', 1));
++  return 0 if (!setup_unix_one( 'gpg' , '/no/such/path', '--version', 1));
+   # ok, we found one
+-  $::gpg = new Crypt::GPG;
+-  $gpg->gpgbin($::progs{'gpg'});
++  $::gpg = new TeXLive::GPG;
++  $::gpg->gpgbin($::progs{'gpg'});
+   # now we need to set up GNUPGHOME to make sure that gpg uses the
+   # right codes
+   if ($ENV{'TL_GNUPGHOME'}) {
+@@ -3701,18 +3709,30 @@ Returns 1 on success, and a pair of 0 and a warning otherwise.
+ 
+ =cut
+ 
++sub slurp_file {
++  my $file = shift;
++  my $file_data = do {
++    local $/ = undef;
++    open my $fh, "<", $file || die "open($file) failed: $!";
++    <$fh>;
++  };
++  return($file_data);
++}
++
+ sub verify_download {
+   my ($file, $url) = @_;
++  # we need the tlpdb data read in
++  my $file_data = slurp_file($file);
+   # first verify digest
+-  my ($ret, $msg) = verify_checksum($file, "$url.checksum");
++  my ($ret, $msg) = verify_checksum($file_data, "$url.checksum");
+   return($ret,$msg) if (!$ret);
+   # next try to verify gpg
+   $ret = 1; # default for gpg download
+   if ($::gpg) {
+     my $urlgpg = "$url.asc";
+     my ($gpg_fh, $gpg_file);
+-    if ($gpg =~ m,^(http|ftp|file)://,) {
+-      ($gpg_fh, $gpg_file) = tempfile();
++    if ($urlgpg =~ m,^(http|ftp|file)://,) {
++      ($gpg_fh, $gpg_file) = File::Temp::tempfile();
+       # now $gpg_fh filehandle is open, the file created
+       # TLUtils::download_file will just overwrite what is there
+       # on windows that doesn't work, so we close the fh immediately
+@@ -3723,7 +3743,11 @@ sub verify_download {
+       $gpg_file = $urlgpg;
+     }
+     if ($ret && (-r "$gpg_file")) {
+-      my ($plaintext, $signature) = $::gpg->verify($file, $gpg_file);
++      my $signdata = slurp_file($gpg_file);
++      # WARNING
++      # the documentation of Crypt::GPG is wrong!!! The first argument
++      # needs to be the signature, the second the content!!!
++      my ($plaintext, $signature) = $::gpg->verify($signdata, $file_data);
+       if ($signature->validity ne "GOOD") {
+         tldie(<<GPGERROR);
+ Verification of downloaded file
+@@ -3733,14 +3757,16 @@ against
+ did not succeed. Please report to texlive\@tug.org
+ GPGERROR
+       } else {
+-        info("cryptographic signature $path verified\n");
++        info("cryptographic signature of $file verified\n");
+       }
+     } else {
+-      debug("no access to cryptographic signature $urlgpg");
++      debug("no access to cryptographic signature $urlgpg\n");
+     }
+   } else {
+     debug("gpg prog not defined, no checking of signatures\n");
+   }
++  # we tldie out above if verification failed, so be happy for now
++  return(1);
+ }
+ 
+ 
+-- 
+2.7.0
+

@@ -1,0 +1,230 @@
+From 03555a90ed3f103347f805410a5874a9ceffa192 Mon Sep 17 00:00:00 2001
+From: Norbert Preining <norbert@preining.info>
+Date: Mon, 7 Mar 2016 18:16:12 +0900
+Subject: [PATCH 22/25] unify the verify_* functions, simplify code, verify
+ checksum file
+
+---
+ Master/tlpkg/TeXLive/TLUtils.pm | 165 +++++++++++++++++++---------------------
+ 1 file changed, 78 insertions(+), 87 deletions(-)
+
+diff --git a/Master/tlpkg/TeXLive/TLUtils.pm b/Master/tlpkg/TeXLive/TLUtils.pm
+index e87204b..c929049 100644
+--- a/Master/tlpkg/TeXLive/TLUtils.pm
++++ b/Master/tlpkg/TeXLive/TLUtils.pm
+@@ -100,7 +100,6 @@ C<TeXLive::TLUtils> -- utilities used in TeX Live infrastructure
+   TeXLive::TLUtils::give_ctan_mirror_base();
+   TeXLive::TLUtils::tlmd5($path);
+   TeXLive::TLUtils::tlchecksum($path);
+-  TeXLive::TLUtils::verify_checksum($file, $checksum);
+   TeXLive::TLUtils::setup_gpg();
+   TeXLive::TLUtils::verify_download($file, $url);
+   TeXLive::TLUtils::compare_tlpobjs($tlpA, $tlpB);
+@@ -178,7 +177,6 @@ BEGIN {
+     &extract_mirror_entry
+     &tlmd5
+     &tlchecksum
+-    &verify_checksum
+     &setup_gpg
+     &verify_download
+     &wsystem
+@@ -3622,57 +3620,6 @@ sub tlchecksum_data {
+ 
+ =pod
+ 
+-=item C<< verify_checksum ($file, $checksum) >>
+-
+-Verifies the checksum of the (already downloaded) file against
+-C<$checksum> (which can be a remote URL).
+-
+-Returns 1 on success, and a pair of 0 and a warning otherwise.
+-
+-=cut
+-
+-sub verify_checksum {
+-  my ($file_data, $checksum) = @_;
+-  ddebug("verify_checksum: remote path of digest = $checksum\n");
+-  my $local_digest;
+-  my $remote_digest;
+-  my ($cs_fh, $cs_file);
+-  my $ret = 1;
+-  if ($checksum =~ m,^(http|ftp)://,) {
+-    ($cs_fh, $cs_file) = File::Temp::tempfile();
+-    # now $cs_fh filehandle is open, the file created
+-    # TLUtils::download_file will just overwrite what is there
+-    # on windows that doesn't work, so we close the fh immediately
+-    # this creates a short loophole, but much better than before anyway
+-    close($cs_fh);
+-    $ret = download_file($checksum, $cs_file);
+-  } else {
+-    $cs_file = $checksum;
+-  }
+-  if ($ret && (-r "$cs_file")) {
+-    open $cs_fh, "<$cs_file" or return(0, "file not found");
+-    if (read ($cs_fh, $remote_digest, $ChecksumLength) != $ChecksumLength) {
+-      return(0, "read error");
+-    } else {
+-      close($cs_fh);
+-      ddebug("found remote digest: $remote_digest\n");
+-    }
+-  } else {
+-    return(0, "digest not found");
+-  }
+-  $local_digest = tlchecksum_data($file_data);
+-  ddebug("local_digest = $local_digest\n");
+-  if ($local_digest eq $remote_digest) {
+-    debug("checksum of local copy identical with remote hash\n");
+-    return(1);
+-  } else {
+-    return(0, "checksum error");
+-  }
+-  return(0, "not reachable");
+-}
+-
+-=pod
+-
+ =item C<< setup_gpg() >>
+ 
+ Tries to set up gpg command line C<$::gpg> used for
+@@ -3706,12 +3653,9 @@ sub setup_gpg {
+ 
+ =pod
+ 
+-=item C<< verify_download($file, $url) >>
+-
+-Verifies a download of C<$url> into C<$file> by checking C<$url.checksum>
+-and if gpg is available, verifying that with C<$url.checksum.gpg>.
++=item C<< slurp_file($file) >>
+ 
+-Returns 1 on success, and a pair of 0 and a warning otherwise.
++Reads the whole file and returns the content in a scalar.
+ 
+ =cut
+ 
+@@ -3725,39 +3669,64 @@ sub slurp_file {
+   return($file_data);
+ }
+ 
++
++=pod
++
++=item C<< verify_download($file, $url) >>
++
++Verifies a download of C<$url> into C<$file> by checking C<$url.checksum>
++and if gpg is available, verifying that with C<$url.checksum.asc>.
++
++Returns 1 on success, and a pair of 0 and a warning otherwise.
++
++=cut
++
++sub download_to_temp_or_file {
++  my $url = shift;
++  my ($url_fh, $url_file);
++  if ($url =~ m,^(http|ftp|file)://,) {
++    ($url_fh, $url_file) = File::Temp::tempfile(UNLINK => 1);
++    # now $url_fh filehandle is open, the file created
++    # TLUtils::download_file will just overwrite what is there
++    # on windows that doesn't work, so we close the fh immediately
++    # this creates a short loophole, but much better than before anyway
++    close($url_fh);
++    $ret = download_file($url, $url_file);
++  } else {
++    $url_file = $url;
++    $ret = 1;
++  }
++  if ($ret && (-r "$url_file")) {
++    return $url_file;
++  }
++  return;
++}
++
+ sub verify_download {
+   my ($file, $url) = @_;
+-  # we need the tlpdb data read in
+-  my $file_data = slurp_file($file);
+-  # first verify digest
+-  my ($ret, $msg) = verify_checksum($file_data, "$url.checksum");
+-  return($ret,$msg) if (!$ret);
+-  # next try to verify gpg
+-  $ret = 1; # default for gpg download
++  # download checksum file
++  my $checksum_url = "$url.checksum";
++  my $signature_url = "$checksum_url.asc";
++
++  my $checksum_file = download_to_temp_or_file($checksum_url);
++  if (!$checksum_file) {
++    # we do not accept if not even a checksum file is present, error out
++    return(0, "checksum file not found");
++  }
++
++  # if we have $::gpg set, we try to verify cryptographic signatures
+   if ($::gpg) {
+-    my $urlgpg = "$url.asc";
+-    my ($signature_fh, $signature_file);
+-    if ($urlgpg =~ m,^(http|ftp|file)://,) {
+-      ($signature_fh, $signature_file) = File::Temp::tempfile(UNLINK => 1);
+-      # now $gpg_fh filehandle is open, the file created
+-      # TLUtils::download_file will just overwrite what is there
+-      # on windows that doesn't work, so we close the fh immediately
+-      # this creates a short loophole, but much better than before anyway
+-      close($signature_fh);
+-      $ret = download_file($urlgpg, $signature_file);
+-    } else {
+-      $signature_file = $urlgpg;
+-    }
+-    if ($ret && (-r "$signature_file")) {
+-      if (TeXLive::TLUtils::gpg_verify_signature($file, $signature_file)) {
+-        info("cryptographic signature of $url verified\n");
++    my $signature_file = download_to_temp_or_file($signature_url);
++    if ($signature_file) {
++      if (TeXLive::TLUtils::gpg_verify_signature($checksum_file, $signature_file)) {
++        info("cryptographic signature of $checksum_url verified\n");
+       } else {
+-        tldie(<<GPGERROR);
+-Verification of downloaded file
+-  $file
++        return(0, <<GPGERROR);
++cryptograpic verification of
++  $checksum_url
+ against
+-  $urlgpg
+-did not succeed. Please report to texlive\@tug.org
++  $signature_url
++failed. Please report to texlive\@tug.org
+ GPGERROR
+       }
+     } else {
+@@ -3766,7 +3735,29 @@ GPGERROR
+   } else {
+     debug("gpg prog not defined, no checking of signatures\n");
+   }
+-  # we tldie out above if verification failed, so be happy for now
++
++  # if we are still here, then either verification was successful,
++  # or no gpg or signature found
++
++  # next step is verification of tlpdb checksum with checksum file
++  # existenc of checksum_file was checked above
++  open $cs_fh, "<$checksum_file" or die("cannot read file: $!");
++  if (read ($cs_fh, $remote_digest, $ChecksumLength) != $ChecksumLength) {
++    close($cs_fh);
++    return(0, "read error from $checksum_file");
++  } else {
++    close($cs_fh);
++    ddebug("found remote digest: $remote_digest\n");
++  }
++  $local_digest = tlchecksum($file);
++  ddebug("local_digest = $local_digest\n");
++  if ($local_digest ne $remote_digest) {
++    return(0, "checksum error");
++  }
++
++  # we are still here, so checksum also succeeded
++  debug("checksum of local copy identical with remote hash\n");
++
+   return(1);
+ }
+ 
+-- 
+2.7.0
+

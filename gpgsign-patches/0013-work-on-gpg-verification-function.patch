@@ -1,0 +1,127 @@
+From fe1d0294b94fcef566bb69c47e0897523b826a65 Mon Sep 17 00:00:00 2001
+From: Norbert Preining <norbert@preining.info>
+Date: Sun, 21 Feb 2016 00:08:55 +0900
+Subject: [PATCH 13/25] work on gpg verification function
+
+---
+ Master/tlpkg/TeXLive/TLPDB.pm   |  5 ++++
+ Master/tlpkg/TeXLive/TLUtils.pm | 66 ++++++++++++++++++++++++++++++++++++++++-
+ 2 files changed, 70 insertions(+), 1 deletion(-)
+
+diff --git a/Master/tlpkg/TeXLive/TLPDB.pm b/Master/tlpkg/TeXLive/TLPDB.pm
+index fa4c096..2ddc7cd 100644
+--- a/Master/tlpkg/TeXLive/TLPDB.pm
++++ b/Master/tlpkg/TeXLive/TLPDB.pm
+@@ -341,6 +341,11 @@ sub from_file {
+           unlink($tlpdbfile);
+         } else {
+           unlink($xzfile);
++          # verify checksum
++          # TODO TODO TODO VERIFY
++          # either here, but we need to do the same alos 10lines down
++          # there when downloading the tlpdb file directly into a pipe!!!
++          #TeXLive::TLUtils::verify_download($tlpdbfile, $path);
+           open($retfh, "<$tlpdbfile") || die "$0: open($tlpdbfile) failed: $!";
+           debug("found the uncompressed xz file\n");
+         }
+diff --git a/Master/tlpkg/TeXLive/TLUtils.pm b/Master/tlpkg/TeXLive/TLUtils.pm
+index 2a2564d..fc542e0 100644
+--- a/Master/tlpkg/TeXLive/TLUtils.pm
++++ b/Master/tlpkg/TeXLive/TLUtils.pm
+@@ -101,6 +101,7 @@ C<TeXLive::TLUtils> -- utilities used in TeX Live infrastructure
+   TeXLive::TLUtils::tlmd5($path);
+   TeXLive::TLUtils::tlchecksum($path);
+   TeXLive::TLUtils::verify_checksum($file, $checksum);
++  TeXLive::TLUtils::verify_download($file, $url);
+   TeXLive::TLUtils::compare_tlpobjs($tlpA, $tlpB);
+   TeXLive::TLUtils::compare_tlpdbs($tlpdbA, $tlpdbB);
+   TeXLive::TLUtils::report_tlpdb_differences(\%ret);
+@@ -177,6 +178,7 @@ BEGIN {
+     &tlmd5
+     &tlchecksum
+     &verify_checksum
++    &verify_download
+     &wsystem
+     &xsystem
+     &run_cmd
+@@ -2320,7 +2322,7 @@ sub setup_unix_one {
+         debug("Using system $p (tested).\n");
+       } else {
+         if ($donotwarn) {
+-          tldebug("$0: initialization of $p failed but ignored!\n");
++          debug("$0: initialization of $p failed but ignored!\n");
+         } else {
+           tlwarn("$0: Initialization failed (in setup_unix_one):\n");
+           tlwarn("$0: could not find a usable $p.\n");
+@@ -3657,6 +3659,68 @@ sub verify_checksum {
+   return(0, "not reachable");
+ }
+ 
++=pod
++
++=item C<< verify_download($file, $url) >>
++
++Verifies a download of C<$url> into C<$file> by checking C<$url.checksum>
++and if gpg is available, verifying that with C<$url.checksum.gpg>.
++
++Returns 1 on success, and a pair of 0 and a warning otherwise.
++
++=cut
++
++sub verify_download {
++  
++  # TODO TODO
++  # we need to set gpg parameters!!!
++
++  die("GPG PARAMEters need to be set!!!\n");
++
++  my ($file, $url) = @_;
++  # first verify digest
++  my ($ret, $msg) = verify_checksum($file, "$url.checksum");
++  return($ret,$mst) if (!$ret);
++  # next try to verify gpg
++  $ret = 1; # default for gpg download
++  if ($::progs{'gpg'}) {
++    my $gpg = new Crypt::GPG;
++    $gpg->gpgbin($::progs{'gpg'});
++    my $urlgpg = "$url.asc";
++    my ($gpg_fh, $gpg_file);
++    if ($gpg =~ m,^(http|ftp|file)://,) {
++      ($gpg_fh, $gpg_file) = tempfile();
++      # now $gpg_fh filehandle is open, the file created
++      # TLUtils::download_file will just overwrite what is there
++      # on windows that doesn't work, so we close the fh immediately
++      # this creates a short loophole, but much better than before anyway
++      close($gpg_fh);
++      $ret = download_file($urlgpg, $gpg_file);
++    } else {
++      $gpg_file = $urlgpg;
++    }
++    if ($ret && (-r "$gpg_file")) {
++      my ($plaintext, $signature) = $gpg->verify($file, $gpg_file);
++      if ($signature->validity ne "GOOD") {
++        tldie(<<GPGERROR);
++Verification of downloaded file
++  $file
++against
++  $urlgpg
++did not succeed. Please report to texlive\@tug.org
++GPGERROR
++      } else {
++        info("cryptographic signature $path verified\n");
++      }
++    } else {
++      debug("no access to cryptographic signature $urlgpg");
++    }
++  } else {
++    debug("gpg prog not defined, no checking of signatures\n");
++  }
++}
++
++
+ #
+ # compare_tlpobjs 
+ # returns a hash
+-- 
+2.7.0
+

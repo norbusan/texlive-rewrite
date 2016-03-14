@@ -1,0 +1,81 @@
+From d53d070187a26128b7f860b5db58a80d585bb0f6 Mon Sep 17 00:00:00 2001
+From: Norbert Preining <norbert@preining.info>
+Date: Mon, 7 Mar 2016 17:47:49 +0900
+Subject: [PATCH 21/25] update security outline
+
+---
+ Master/tlpkg/doc/tl-security-proposal.txt | 37 +++++++++++++++++++++----------
+ 1 file changed, 25 insertions(+), 12 deletions(-)
+
+diff --git a/Master/tlpkg/doc/tl-security-proposal.txt b/Master/tlpkg/doc/tl-security-proposal.txt
+index 83f9b32..7da5a52 100644
+--- a/Master/tlpkg/doc/tl-security-proposal.txt
++++ b/Master/tlpkg/doc/tl-security-proposal.txt
+@@ -1,6 +1,14 @@
+ Security Proposal for TeX Live
+ ==============================
+-(last change NP 2016-01-04)
++(last change NP 2016-03-07)
++
++Changelog:
++* 20160307
++	use md5 for location digest - saved tlpdb filename
++	switch to sha512
++* 20160104
++	initial document
++
+ 
+ We use md5 sums in the following places:
+ 1) md5sum of the texlive.tlpdb in texlive.tlpdb.md5 in tlnet/tlcritical
+@@ -15,32 +23,37 @@ We use md5 sums in the following places:
+ 
+ It would make sense to replace some or all of the above with sha256.
+ 2) is the only one we could keep as md5, but I propose that if
+-we switch, then we switch all the md5 to sha256.
++we switch, then we switch all the md5 to sha512.
++
++	Change 20160307
++	I made changes that 2) remains as MD5 (tl_short_digest)
++	so that the generated filenames are not exorbitant long
++	(like for sha512).
+ 
+ In principle my idea about security setup is as follows:
+ 
+ For the installer
+-* installer packages are sha256 hashed (already done!)
+-* the sha256 files are gpg signed with our gpg tlnet key
++* installer packages are sha512 hashed (already done!)
++* the sha512 files are gpg signed with our gpg tlnet key
+ * our public gpg key is included in texlive.infra package
+ 
+ For the rest (installation or update from remote)
+-* install-tl/tlmgr downloads the texlive.sha256.gpg and
+-  texlive.sha256
++* install-tl/tlmgr downloads the texlive.checksum.gpg and
++  texlive.checksum
+ * verifies that this is ok
+-* if yes, download the texlive.tlpdb and check the sha256
++* if yes, download the texlive.tlpdb and check the checksum
+   value of it (this is the reason we should switch from
+-  md5 to sha256, as md5 is AFAIR fakeable)
++  md5 to sha512, as md5 is AFAIR fakeable)
+ * if all succeed, do the usual verification of each
+-  container only by sha256 (instead of md5)
++  container only by sha512 (instead of md5)
+ 
+ There is no need to sign each container, as we are having
+-indirectly signed sha256 hashes of the containers
+-(in the tlpdb, which is sha256-ed, and then signed).
++indirectly signed sha512 hashes of the containers
++(in the tlpdb, which is sha512-ed, and then signed).
+ 
+ Usage:
+ * if gpg is found, try to use it, otherwise just
+   give warning about how to verify/gpg necessary
+-* only if gpg is available, download .sha256.asc and
++* only if gpg is available, download .sha512.asc and
+   verify
+ 
+-- 
+2.7.0
+

@@ -1,0 +1,42 @@
+From d91972958e9a14fbed0485738dedf9a1f1930c4d Mon Sep 17 00:00:00 2001
+From: Norbert Preining <norbert@preining.info>
+Date: Sat, 20 Feb 2016 22:12:56 +0900
+Subject: [PATCH 09/25] allow for non-failing setup_unix_one
+
+---
+ Master/tlpkg/TeXLive/TLUtils.pm | 12 ++++++++----
+ 1 file changed, 8 insertions(+), 4 deletions(-)
+
+diff --git a/Master/tlpkg/TeXLive/TLUtils.pm b/Master/tlpkg/TeXLive/TLUtils.pm
+index bfa1fae..216836f 100644
+--- a/Master/tlpkg/TeXLive/TLUtils.pm
++++ b/Master/tlpkg/TeXLive/TLUtils.pm
+@@ -2243,7 +2243,7 @@ sub setup_programs {
+ # Return 0 if failure, 1 if success.
+ #
+ sub setup_unix_one {
+-  my ($p, $def, $arg) = @_;
++  my ($p, $def, $arg, $donotwarn) = @_;
+   our $tmp;
+   my $test_fallback = 0;
+   if (-r $def) {
+@@ -2317,9 +2317,13 @@ sub setup_unix_one {
+       if ($ret == 0) {
+         debug("Using system $p (tested).\n");
+       } else {
+-        tlwarn("$0: Initialization failed (in setup_unix_one):\n");
+-        tlwarn("$0: could not find a usable $p.\n");
+-        tlwarn("$0: Please install $p and try again.\n");
++        if ($donotwarn) {
++          tldebug("$0: initialization of $p failed but ignored!\n");
++        } else {
++          tlwarn("$0: Initialization failed (in setup_unix_one):\n");
++          tlwarn("$0: could not find a usable $p.\n");
++          tlwarn("$0: Please install $p and try again.\n");
++        }
+         return 0;
+       }
+     } else {
+-- 
+2.7.0
+

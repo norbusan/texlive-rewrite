@@ -1,0 +1,133 @@
+From a93dc276d7884e017f482f38d9ce82819895698d Mon Sep 17 00:00:00 2001
+From: Norbert Preining <norbert@preining.info>
+Date: Sun, 3 Jan 2016 13:52:13 +0900
+Subject: [PATCH 02/25] TLOBJ: support sha256, make_container returns sha256,
+ use that
+
+---
+ Master/tlpkg/TeXLive/TLPOBJ.pm        | 28 ++++++++++++++++++++++------
+ Master/tlpkg/bin/tl-update-containers |  6 +++---
+ 2 files changed, 25 insertions(+), 9 deletions(-)
+
+diff --git a/Master/tlpkg/TeXLive/TLPOBJ.pm b/Master/tlpkg/TeXLive/TLPOBJ.pm
+index 974e232..b22010c 100644
+--- a/Master/tlpkg/TeXLive/TLPOBJ.pm
++++ b/Master/tlpkg/TeXLive/TLPOBJ.pm
+@@ -167,7 +167,11 @@ sub from_fh {
+       $self->{$cmd} = $arg;
+     } elsif ($cmd eq 'containermd5' || $cmd eq 'srccontainermd5'
+         || $cmd eq 'doccontainermd5') {
+-      $arg =~ /^[a-f0-9]+$/ or die "Illegal md5 value: $line!";
++      $arg =~ /^[a-f0-9]{32}$/ or die "Illegal md5 value: $line!";
++      $self->{$cmd} = $arg;
++    } elsif ($cmd eq 'containersha256' || $cmd eq 'srccontainersha256'
++        || $cmd eq 'doccontainersha256') {
++      $arg =~ /^[a-f0-9]{64}$/ or die "Illegal sha256 value: $line!";
+       $self->{$cmd} = $arg;
+     } elsif ($cmd eq 'name') {
+       $arg =~ /^([-.\w]+)$/ or die("Invalid name: $line!");
+@@ -308,12 +312,18 @@ sub writeout {
+   if (defined($self->{'containermd5'})) {
+     print $fd "containermd5 $self->{'containermd5'}\n";
+   }
++  if (defined($self->{'containersha256'})) {
++    print $fd "containersha256 $self->{'containersha256'}\n";
++  }
+   if (defined($self->{'doccontainersize'})) {
+     print $fd "doccontainersize $self->{'doccontainersize'}\n";
+   }
+   if (defined($self->{'doccontainermd5'})) {
+     print $fd "doccontainermd5 $self->{'doccontainermd5'}\n";
+   }
++  if (defined($self->{'doccontainersha256'})) {
++    print $fd "doccontainersha256 $self->{'doccontainersha256'}\n";
++  }
+   if (defined($self->{'docfiles'}) && (@{$self->{'docfiles'}})) {
+     print $fd "docfiles size=$self->{'docsize'}\n";
+     foreach my $f (sort @{$self->{'docfiles'}}) {
+@@ -337,6 +347,9 @@ sub writeout {
+   if (defined($self->{'srccontainermd5'})) {
+     print $fd "srccontainermd5 $self->{'srccontainermd5'}\n";
+   }
++  if (defined($self->{'srccontainersha256'})) {
++    print $fd "srccontainersha256 $self->{'srccontainersha256'}\n";
++  }
+   if (defined($self->{'srcfiles'}) && (@{$self->{'srcfiles'}})) {
+     print $fd "srcfiles size=$self->{'srcsize'}\n";
+     foreach (sort @{$self->{'srcfiles'}}) {
+@@ -674,7 +687,7 @@ sub make_container {
+     return (0, 0, "");
+   }
+   my $size = (stat "$destdir/$containername") [7];
+-  my $md5 = TeXLive::TLUtils::tlmd5("$destdir/$containername");
++  my $sha256 = TeXLive::TLUtils::tlsha256("$destdir/$containername");
+   
+   # cleaning up
+   unlink("$tlpobjdir/$self->{'name'}.tlpobj");
+@@ -683,8 +696,8 @@ sub make_container {
+   rmdir($InfraLocation) if $removetlpkgdir;
+   xchdir($cwd);
+ 
+-  debug(" done $containername, size $size, $md5\n");
+-  return ($size, $md5, "$destdir/$containername");
++  debug(" done $containername, size $size, $sha256\n");
++  return ($size, $sha256, "$destdir/$containername");
+ }
+ 
+ 
+@@ -1480,8 +1493,11 @@ there are 6 more possible keys:
+   $tlpobj->containermd5
+   $tlpobj->doccontainermd5
+   $tlpobj->srccontainermd5
++  $tlpobj->containersha256
++  $tlpobj->doccontainersha256
++  $tlpobj->srccontainersha256
+ 
+-describing the respective sizes and md5sums in bytes and as hex string, resp.
++describing the respective sizes and md5sums/sha256sums in bytes and as hex string, resp.
+ The latter two are only present
+ if src/doc file container splitting is activated for that install medium.
+ 
+@@ -1562,7 +1578,7 @@ is placed into the root of the installation.
+ This is used to distribute packages which can be installed in any arbitrary
+ texmf tree (of other distributions, too).
+ 
+-Return values are the size, the md5sum, and the full name of the container.
++Return values are the size, the sha256sum, and the full name of the container.
+ 
+ =item C<recompute_sizes($tltree)>
+ 
+diff --git a/Master/tlpkg/bin/tl-update-containers b/Master/tlpkg/bin/tl-update-containers
+index 2ea4ecd..74e4e34 100755
+--- a/Master/tlpkg/bin/tl-update-containers
++++ b/Master/tlpkg/bin/tl-update-containers
+@@ -277,7 +277,7 @@ sub main
+             $obj->srccontainersize($s);
+           }
+           if ($m ne "") {
+-            $obj->srccontainermd5($m);
++            $obj->srccontainersha256($m);
+           }
+         } else {
+           # no src files in the package, so remove old .source containers
+@@ -300,7 +300,7 @@ sub main
+             $obj->doccontainersize($s);
+           }
+           if ($m ne "") {
+-            $obj->doccontainermd5($m);
++            $obj->doccontainersha256($m);
+           }
+         } else {
+           # no doc files in the package, so remove old .doc containers
+@@ -318,7 +318,7 @@ sub main
+         $obj->containersize($s);
+       }
+       if ($m ne "") {
+-        $obj->containermd5($m);
++        $obj->containersha256($m);
+       }
+     }
+     # if the container has been build relocatable we save that information
+-- 
+2.7.0
+
