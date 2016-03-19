@@ -1,0 +1,164 @@
+From fcd7378969e2f003311d4ed054655856e32e678d Mon Sep 17 00:00:00 2001
+From: Norbert Preining <norbert@preining.info>
+Date: Sat, 19 Mar 2016 09:48:49 +0900
+Subject: [PATCH 27/27] make verify_* return values numeric with informal
+ messages
+
+---
+ Master/texmf-dist/scripts/texlive/tlmgr.pl | 19 ++++++---------
+ Master/tlpkg/TeXLive/TLPDB.pm              |  2 +-
+ Master/tlpkg/TeXLive/TLUtils.pm            | 38 +++++++++++++++++++++---------
+ 3 files changed, 35 insertions(+), 24 deletions(-)
+
+diff --git a/Master/texmf-dist/scripts/texlive/tlmgr.pl b/Master/texmf-dist/scripts/texlive/tlmgr.pl
+index 99e1711..059401d 100755
+--- a/Master/texmf-dist/scripts/texlive/tlmgr.pl
++++ b/Master/texmf-dist/scripts/texlive/tlmgr.pl
+@@ -5849,9 +5849,8 @@ sub setup_one_remotetlpdb {
+       ddebug("remote path of digest = $path\n");
+ 
+       my ($ret, $msg) = TeXLive::TLUtils::verify_checksum($loc_copy_of_remote_tlpdb, "$path.checksum");
+-      if (!$ret) {
+-        if (($msg eq "file not found") || ($msg eq "read error") || ($msg eq "digest not found")) {
+-          info(<<END_NO_INTERNET);
++      if ($ret < 0) {
++        info(<<END_NO_INTERNET);
+ No connection to the internet.
+ Unable to download the checksum of the remote TeX Live database,
+ but found a local copy so using that.
+@@ -5863,15 +5862,11 @@ http://tug.org/texlive/doc/install-tl.html
+ 
+ END_NO_INTERNET
+         # above text duplicated in install-tl
+-
+-          $remotetlpdb = TeXLive::TLPDB->new(root => $location,
+-            tlpdbfile => $loc_copy_of_remote_tlpdb);
+-          $local_copy_tlpdb_used = 1;
+-        } elsif ($msg eq "checksum error") {
+-          # no problem, reload it!
+-        } else {
+-          tlwarn("Unknown return message from verify_checksum: $msg\n");
+-        }
++        $remotetlpdb = TeXLive::TLPDB->new(root => $location,
++          tlpdbfile => $loc_copy_of_remote_tlpdb);
++        $local_copy_tlpdb_used = 1;
++      } elsif ($ret > 0) {
++        # no problem, checksum is wrong, we need to get new tlpdb
+       } else {
+         debug("checksum of local copy identical with remote hash\n");
+         $remotetlpdb = TeXLive::TLPDB->new(root => $location,
+diff --git a/Master/tlpkg/TeXLive/TLPDB.pm b/Master/tlpkg/TeXLive/TLPDB.pm
+index 8dc0044..e30a7c8 100644
+--- a/Master/tlpkg/TeXLive/TLPDB.pm
++++ b/Master/tlpkg/TeXLive/TLPDB.pm
+@@ -363,7 +363,7 @@ sub from_file {
+     #
+     # before we open and proceed, verify the downloaded file
+     my ($r, $m) = TeXLive::TLUtils::verify_download($tlpdbfile, $path);
+-    if (!$r) {
++    if ($r != 0) {
+       tldie("$0: verification of $tlpdbfile from $path failed ($r): $m\n");
+     }
+     open($retfh, "<$tlpdbfile") || die "$0: open($tlpdbfile) failed: $!";
+diff --git a/Master/tlpkg/TeXLive/TLUtils.pm b/Master/tlpkg/TeXLive/TLUtils.pm
+index b162b09..67709a1 100644
+--- a/Master/tlpkg/TeXLive/TLUtils.pm
++++ b/Master/tlpkg/TeXLive/TLUtils.pm
+@@ -3676,9 +3676,10 @@ sub slurp_file {
+ 
+ =item C<< verify_checksum($file, $checksum_url) >>
+ 
+-Verifies that C<$file> has cecksum C<$checksum_url>.
++Verifies that C<$file> has checksum C<$checksum_url>.
+ 
+-Returns 1 on success, and a pair of 0 and a warning otherwise.
++Returns 0 on success, -1 on connection error, 1 on checksum error.
++In case of errors returns an informal message as second argument.
+ 
+ =cut
+ 
+@@ -3687,10 +3688,13 @@ sub verify_checksum {
+   my $checksum_file = download_to_temp_or_file($checksum_url);
+   # next step is verification of tlpdb checksum with checksum file
+   # existenc of checksum_file was checked above
++  if (!$checksum_file) {
++    return(-1, "download did not succeed: $checksum_url");
++  }
+   open $cs_fh, "<$checksum_file" or die("cannot read file: $!");
+   if (read ($cs_fh, $remote_digest, $ChecksumLength) != $ChecksumLength) {
+     close($cs_fh);
+-    return(0, "read error from $checksum_file");
++    return(1, "incomplete read from $checksum_file");
+   } else {
+     close($cs_fh);
+     ddebug("found remote digest: $remote_digest\n");
+@@ -3698,23 +3702,23 @@ sub verify_checksum {
+   $local_digest = tlchecksum($file);
+   ddebug("local_digest = $local_digest\n");
+   if ($local_digest ne $remote_digest) {
+-    return(0, "checksum error");
++    return(1, "digest disagree");
+   }
+ 
+   # we are still here, so checksum also succeeded
+   debug("checksum of local copy identical with remote hash\n");
+ 
+-  return(1);
++  return(0);
+ }
+ 
+ =pod
+ 
+-=item C<< verify_download($file, $url) >>
++=item C<< download_to_temp_or_file($url) >>
+ 
+-Verifies a download of C<$url> into C<$file> by checking C<$url.checksum>
+-and if gpg is available, verifying that with C<$url.checksum.asc>.
++If C<$url> tries to download the file into a temporary file.
++In both cases returns the local file.
+ 
+-Returns 1 on success, and a pair of 0 and a warning otherwise.
++Returns the local file name if succeeded, otherwise undef.
+ 
+ =cut
+ 
+@@ -3739,6 +3743,18 @@ sub download_to_temp_or_file {
+   return;
+ }
+ 
++=pod
++
++=item C<< verify_download($file, $url) >>
++
++Verifies a download of C<$url> into C<$file> by checking C<$url.checksum>
++and if gpg is available, verifying that with C<$url.checksum.asc>.
++
++Returns 0 on success, -1 on connection error, 1 on checksum error.
++In case of errors returns an informal message as second argument.
++
++=cut
++
+ sub verify_download {
+   my ($file, $url) = @_;
+   # download checksum file
+@@ -3748,7 +3764,7 @@ sub verify_download {
+   my $checksum_file = download_to_temp_or_file($checksum_url);
+   if (!$checksum_file) {
+     # we do not accept if not even a checksum file is present, error out
+-    return(0, "checksum file not found");
++    return(-1, "download did not succeed: $checksum_url");
+   }
+ 
+   # if we have $::gpg set, we try to verify cryptographic signatures
+@@ -3758,7 +3774,7 @@ sub verify_download {
+       if (TeXLive::TLUtils::gpg_verify_signature($checksum_file, $signature_file)) {
+         info("cryptographic signature of $checksum_url verified\n");
+       } else {
+-        return(0, <<GPGERROR);
++        return(1, <<GPGERROR);
+ cryptograpic verification of
+   $checksum_url
+ against
+-- 
+2.8.0.rc3
+

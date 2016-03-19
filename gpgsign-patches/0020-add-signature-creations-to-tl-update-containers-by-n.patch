@@ -1,7 +1,7 @@
-From b1ecef817082e7c4d86053c1becb09b9c17691e1 Mon Sep 17 00:00:00 2001
+From 4afe648f3eef8ec81d494b8188088a67c2055263 Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Mon, 7 Mar 2016 17:39:21 +0900
-Subject: [PATCH 20/25] add signature creations to tl-update-containers (by now
+Subject: [PATCH 20/27] add signature creations to tl-update-containers (by now
  non functional)
 
 ---
@@ -23,5 +23,5 @@ index 743d18a..1c98a85 100755
    } else {
      tlwarn("Cannot chdir to $opt_location/tlpkg/ for md5/checksum hash creation\n");
 -- 
-2.7.0
+2.8.0.rc3
 

@@ -1,7 +1,7 @@
-From f1b7f63d7dc6f33a26e3443e2000fb4c240906b0 Mon Sep 17 00:00:00 2001
+From 00d87ae5d0e100794fd1ed9c832d028366144655 Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Thu, 25 Feb 2016 16:16:28 +0900
-Subject: [PATCH 14/25] TLUtils: new function: setup_gpg
+Subject: [PATCH 14/27] TLUtils: new function: setup_gpg
 
 ---
  Master/tlpkg/TeXLive/TLUtils.pm | 37 +++++++++++++++++++++++++++++++++----
@@ -84,5 +84,5 @@ index fc542e0..5753f83 100644
          tldie(<<GPGERROR);
  Verification of downloaded file
 -- 
-2.7.0
+2.8.0.rc3
 

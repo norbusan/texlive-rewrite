@@ -1,7 +1,7 @@
-From 6716086529f7064a2d3e2ceacc078ac9aafeef23 Mon Sep 17 00:00:00 2001
+From 8d3d910ee5279e7e09b0c15bc52eb268c0046af0 Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Mon, 7 Mar 2016 17:28:54 +0900
-Subject: [PATCH 18/25] switch to home-made gpg calling, make tlmgr work
+Subject: [PATCH 18/27] switch to home-made gpg calling, make tlmgr work
 
 ---
  Master/texmf-dist/scripts/texlive/tlmgr.pl |   15 +-
@@ -1465,5 +1465,5 @@ index af16755..e87204b 100644
  #
  # compare_tlpobjs 
 -- 
-2.7.0
+2.8.0.rc3
 

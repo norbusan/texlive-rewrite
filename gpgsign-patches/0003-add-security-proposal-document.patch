@@ -1,7 +1,7 @@
-From 5b60d50f3497dd859f248a0442180c25ce33c3f4 Mon Sep 17 00:00:00 2001
+From 46ff5faf9106cb9c9d2347eb72be25918d4c990b Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Sun, 3 Jan 2016 13:56:13 +0900
-Subject: [PATCH 03/25] add security proposal document
+Subject: [PATCH 03/27] add security proposal document
 
 ---
  Master/tlpkg/doc/tl-security-proposal.txt | 62 +++++++++++++++++++++++++++++++
@@ -77,5 +77,5 @@ index 0000000..87c9296
 +  in the configuration file.
 +
 -- 
-2.7.0
+2.8.0.rc3
 

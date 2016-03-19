@@ -1,7 +1,7 @@
-From eb5e38f2c64a0095d3edb72b0396d95bb8731224 Mon Sep 17 00:00:00 2001
+From a306ff01065e3c43923d738c574d845f01e1d626 Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Mon, 4 Jan 2016 08:32:33 +0900
-Subject: [PATCH 05/25] starting work on tlmgr/gpg
+Subject: [PATCH 05/27] starting work on tlmgr/gpg
 
 ---
  Master/texmf-dist/scripts/texlive/tlmgr.pl | 7 +++++++
@@ -33,5 +33,5 @@ index 54a1296..990463e 100755
    }
    if (!defined($remotetlpdb)) {
 -- 
-2.7.0
+2.8.0.rc3
 

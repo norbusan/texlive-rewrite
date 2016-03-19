@@ -1,7 +1,7 @@
-From a93dc276d7884e017f482f38d9ce82819895698d Mon Sep 17 00:00:00 2001
+From 3d75e0512249d7bab0743d8609cd5d712cd8e4ac Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Sun, 3 Jan 2016 13:52:13 +0900
-Subject: [PATCH 02/25] TLOBJ: support sha256, make_container returns sha256,
+Subject: [PATCH 02/27] TLOBJ: support sha256, make_container returns sha256,
  use that
 
 ---
@@ -129,5 +129,5 @@ index 2ea4ecd..74e4e34 100755
      }
      # if the container has been build relocatable we save that information
 -- 
-2.7.0
+2.8.0.rc3
 

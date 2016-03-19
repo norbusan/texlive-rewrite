@@ -1,7 +1,7 @@
-From fe1d0294b94fcef566bb69c47e0897523b826a65 Mon Sep 17 00:00:00 2001
+From 1f20dffbb540b51688faaa06c83642f10636d64c Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Sun, 21 Feb 2016 00:08:55 +0900
-Subject: [PATCH 13/25] work on gpg verification function
+Subject: [PATCH 13/27] work on gpg verification function
 
 ---
  Master/tlpkg/TeXLive/TLPDB.pm   |  5 ++++
@@ -123,5 +123,5 @@ index 2a2564d..fc542e0 100644
  # compare_tlpobjs 
  # returns a hash
 -- 
-2.7.0
+2.8.0.rc3
 

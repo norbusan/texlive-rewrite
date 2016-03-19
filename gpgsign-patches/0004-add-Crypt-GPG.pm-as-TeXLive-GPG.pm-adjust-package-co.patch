@@ -1,7 +1,7 @@
-From fed9ab1c661524cfc5daf0db0bb2c81f474279e6 Mon Sep 17 00:00:00 2001
+From 3f9dcd090f913989b5d9cc8ba983832629bbfcaf Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Sun, 3 Jan 2016 22:25:00 +0900
-Subject: [PATCH 04/25] add Crypt::GPG.pm as TeXLive::GPG.pm, adjust package
+Subject: [PATCH 04/27] add Crypt::GPG.pm as TeXLive::GPG.pm, adjust package
  code
 
 ---
@@ -1290,5 +1290,5 @@ index 0000000..1e8cb4c
 +=cut
 +
 -- 
-2.7.0
+2.8.0.rc3
 

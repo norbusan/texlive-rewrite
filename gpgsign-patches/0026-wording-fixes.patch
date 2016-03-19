@@ -1,0 +1,67 @@
+From e78fb575a83e88f3f827cf3bd92b3a5363e15c71 Mon Sep 17 00:00:00 2001
+From: Norbert Preining <norbert@preining.info>
+Date: Sat, 19 Mar 2016 09:08:07 +0900
+Subject: [PATCH 26/27] wording fixes
+
+---
+ Master/tlpkg/TeXLive/TLPOBJ.pm        | 10 +++++-----
+ Master/tlpkg/bin/tl-update-containers |  2 +-
+ 2 files changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/Master/tlpkg/TeXLive/TLPOBJ.pm b/Master/tlpkg/TeXLive/TLPOBJ.pm
+index 017ce35..b665ce5 100644
+--- a/Master/tlpkg/TeXLive/TLPOBJ.pm
++++ b/Master/tlpkg/TeXLive/TLPOBJ.pm
+@@ -163,15 +163,15 @@ sub from_fh {
+       }
+     } elsif ($cmd eq 'containersize' || $cmd eq 'srccontainersize'
+         || $cmd eq 'doccontainersize') {
+-      $arg =~ /^[0-9]+$/ or die "Illegal size value: $line!";
++      $arg =~ /^[0-9]+$/ or die "Invalid size value: $line!";
+       $self->{$cmd} = $arg;
+     } elsif ($cmd eq 'containermd5' || $cmd eq 'srccontainermd5'
+         || $cmd eq 'doccontainermd5') {
+-      $arg =~ /^[a-f0-9]{32}$/ or die "Illegal md5 value: $line!";
++      $arg =~ /^[a-f0-9]{32}$/ or die "Invalid md5 value: $line!";
+       $self->{$cmd} = $arg;
+     } elsif ($cmd eq 'containerchecksum' || $cmd eq 'srccontainerchecksum'
+         || $cmd eq 'doccontainerchecksum') {
+-      $arg =~ /^[a-f0-9]{$ChecksumLength}$/ or die "Illegal checksum value: $line!";
++      $arg =~ /^[a-f0-9]{$ChecksumLength}$/ or die "Invalid checksum value: $line!";
+       $self->{$cmd} = $arg;
+     } elsif ($cmd eq 'name') {
+       $arg =~ /^([-.\w]+)$/ or die("Invalid name: $line!");
+@@ -206,7 +206,7 @@ sub from_fh {
+         $self->{'binsize'}{$arch} = $size;
+       }
+     } elsif ($cmd eq 'relocated') {
+-      ($arg eq '0' || $arg eq '1') or die "Illegal value: $line!";
++      ($arg eq '0' || $arg eq '1') or die "Invalid value: $line!";
+       $self->{'relocated'} = $arg;
+     } elsif ($cmd eq 'catalogue') {
+       $self->{'catalogue'} = $arg;
+@@ -1575,7 +1575,7 @@ is placed into the root of the installation.
+ This is used to distribute packages which can be installed in any arbitrary
+ texmf tree (of other distributions, too).
+ 
+-Return values are the size, the sha256sum, and the full name of the container.
++Return values are the size, the checksum, and the full name of the container.
+ 
+ =item C<recompute_sizes($tltree)>
+ 
+diff --git a/Master/tlpkg/bin/tl-update-containers b/Master/tlpkg/bin/tl-update-containers
+index ba516ae..ad83e9e 100755
+--- a/Master/tlpkg/bin/tl-update-containers
++++ b/Master/tlpkg/bin/tl-update-containers
+@@ -391,7 +391,7 @@ sub main
+         --armor --detach-sign --local-user 0x3E57E2CA1312AC2E texlive.tlpdb.checksum");
+     xchdir($olddir);
+   } else {
+-    tlwarn("Cannot chdir to $opt_location/tlpkg/ for md5/checksum hash creation\n");
++    tlwarn("chdir($opt_location/tlpkg/) for md5/checksum creation failed\n: $?");
+   }
+   
+   if (! @ARGV) {
+-- 
+2.8.0.rc3
+

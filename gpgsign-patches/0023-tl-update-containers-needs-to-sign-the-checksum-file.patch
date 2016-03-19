@@ -1,7 +1,7 @@
-From 88359ed7d48eb99bd23b6665ef292877f641275c Mon Sep 17 00:00:00 2001
+From d40924fa063c00cf060a38ea4647a0a1b94adb39 Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Mon, 7 Mar 2016 18:28:58 +0900
-Subject: [PATCH 23/25] tl-update-containers needs to sign the checksum file
+Subject: [PATCH 23/27] tl-update-containers needs to sign the checksum file
 
 ---
  Master/tlpkg/bin/tl-update-containers | 2 +-
@@ -21,5 +21,5 @@ index 1c98a85..ba516ae 100755
    } else {
      tlwarn("Cannot chdir to $opt_location/tlpkg/ for md5/checksum hash creation\n");
 -- 
-2.7.0
+2.8.0.rc3
 

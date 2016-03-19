@@ -1,7 +1,7 @@
-From 1731d5df09857266f2f88bb6a429cf48c2c5747b Mon Sep 17 00:00:00 2001
+From 2c792343c525f0f6a957a8c1acb63330177c09b1 Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Sat, 20 Feb 2016 23:40:22 +0900
-Subject: [PATCH 12/25] use tlchecksum instead of tlmd5
+Subject: [PATCH 12/27] use tlchecksum instead of tlmd5
 
 ---
  Master/tlpkg/TeXLive/TLUtils.pm | 2 +-
@@ -21,5 +21,5 @@ index 5ed6c34..2a2564d 100644
        unlink($xzfile);
        return;
 -- 
-2.7.0
+2.8.0.rc3
 

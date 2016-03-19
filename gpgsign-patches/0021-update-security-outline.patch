@@ -1,7 +1,7 @@
-From d53d070187a26128b7f860b5db58a80d585bb0f6 Mon Sep 17 00:00:00 2001
+From a19838703c63e1c446d58b084894246ab597420d Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Mon, 7 Mar 2016 17:47:49 +0900
-Subject: [PATCH 21/25] update security outline
+Subject: [PATCH 21/27] update security outline
 
 ---
  Master/tlpkg/doc/tl-security-proposal.txt | 37 +++++++++++++++++++++----------
@@ -77,5 +77,5 @@ index 83f9b32..7da5a52 100644
    verify
  
 -- 
-2.7.0
+2.8.0.rc3
 

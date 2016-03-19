@@ -1,7 +1,7 @@
-From a074b7db5f2d25bd5fd77c5f0d6ecd74ba39935b Mon Sep 17 00:00:00 2001
+From cb22f0ec6861e14ec636e35675d3f971f41f8977 Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Mon, 7 Mar 2016 11:24:57 +0900
-Subject: [PATCH 15/25] refactor downloading, verify downloaded tlpdb
+Subject: [PATCH 15/27] refactor downloading, verify downloaded tlpdb
 
 ---
  Master/tlpkg/TeXLive/TLPDB.pm   | 57 ++++++++++++++++++++++-------------------
@@ -127,5 +127,5 @@ index 5753f83..93b27c6 100644
    $ret = 1; # default for gpg download
    if ($::gpg) {
 -- 
-2.7.0
+2.8.0.rc3
 

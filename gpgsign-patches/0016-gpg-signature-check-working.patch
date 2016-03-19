@@ -1,7 +1,7 @@
-From 286184291cc00735ad6cbb0786140be157a0b17c Mon Sep 17 00:00:00 2001
+From 4c4c364e25addc0f2c79f712cd9d4fc6d6ac9448 Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Mon, 7 Mar 2016 12:41:51 +0900
-Subject: [PATCH 16/25] gpg signature check working
+Subject: [PATCH 16/27] gpg signature check working
 
 ---
  Master/install-tl               |  7 ++++++
@@ -185,5 +185,5 @@ index 93b27c6..af16755 100644
  
  
 -- 
-2.7.0
+2.8.0.rc3
 

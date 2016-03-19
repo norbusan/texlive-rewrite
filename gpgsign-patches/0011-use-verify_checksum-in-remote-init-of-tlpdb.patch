@@ -1,7 +1,7 @@
-From 27dd4a1a3b531f7c4a92bd5311d1e845e8ccd973 Mon Sep 17 00:00:00 2001
+From 4508516df9982075da2dcf20b30bab94d1c8829f Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Sat, 20 Feb 2016 23:38:20 +0900
-Subject: [PATCH 11/25] use verify_checksum in remote init of tlpdb
+Subject: [PATCH 11/27] use verify_checksum in remote init of tlpdb
 
 ---
  Master/texmf-dist/scripts/texlive/tlmgr.pl | 33 +++++++++++++-----------------
@@ -67,5 +67,5 @@ index 3144bd9..74d3c8b 100755
    }
    if (!defined($remotetlpdb)) {
 -- 
-2.7.0
+2.8.0.rc3
 

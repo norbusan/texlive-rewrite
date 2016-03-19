@@ -1,7 +1,7 @@
-From 4771d60124a860dcec77252e69e8ece87d57bd60 Mon Sep 17 00:00:00 2001
+From 2f8970801870213cc016a5d0d373a9fe9b1d758a Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Mon, 7 Mar 2016 18:46:36 +0900
-Subject: [PATCH 24/25] reintroduce verify_checksum, single out code, adapt
+Subject: [PATCH 24/27] reintroduce verify_checksum, single out code, adapt
  tlmgr
 
 tlmgr uses verify_checksum to verify the downloaded tlpdb copy
@@ -116,5 +116,5 @@ index c929049..b255588 100644
  
  sub gpg_verify_signature {
 -- 
-2.7.0
+2.8.0.rc3
 

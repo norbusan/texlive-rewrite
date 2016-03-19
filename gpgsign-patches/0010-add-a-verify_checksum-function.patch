@@ -1,7 +1,7 @@
-From b9ff7a09ed0a6b8aef2208cc2df75d5525e18fab Mon Sep 17 00:00:00 2001
+From 1d4812ce5fdd5916147005890a58571cbc009066 Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Sat, 20 Feb 2016 23:26:38 +0900
-Subject: [PATCH 10/25] add a verify_checksum function
+Subject: [PATCH 10/27] add a verify_checksum function
 
 ---
  Master/tlpkg/TeXLive/TLUtils.pm | 53 +++++++++++++++++++++++++++++++++++++++++
@@ -86,5 +86,5 @@ index 216836f..5ed6c34 100644
  # compare_tlpobjs 
  # returns a hash
 -- 
-2.7.0
+2.8.0.rc3
 
