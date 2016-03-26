@@ -1,7 +1,7 @@
-From 62c19521b322e7f83c72021eff7366cb62b34da5 Mon Sep 17 00:00:00 2001
+From 4530adb3992873bdb627cc19f313347ee2ea38fc Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Tue, 8 Mar 2016 22:55:27 +0900
-Subject: [PATCH 25/27] adjust gpg code to spaces in filenames and win32
+Subject: [PATCH 25/33] adjust gpg code to spaces in filenames and win32
 
 ---
  Master/tlpkg/TeXLive/TLUtils.pm | 21 ++++++++++++++-------

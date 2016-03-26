@@ -1,7 +1,7 @@
-From cb22f0ec6861e14ec636e35675d3f971f41f8977 Mon Sep 17 00:00:00 2001
+From 28ac3db80d93108fd0a79602b8ad938d917cc85b Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Mon, 7 Mar 2016 11:24:57 +0900
-Subject: [PATCH 15/27] refactor downloading, verify downloaded tlpdb
+Subject: [PATCH 15/33] refactor downloading, verify downloaded tlpdb
 
 ---
  Master/tlpkg/TeXLive/TLPDB.pm   | 57 ++++++++++++++++++++++-------------------

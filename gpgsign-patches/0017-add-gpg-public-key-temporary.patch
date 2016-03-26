@@ -1,7 +1,7 @@
-From 5ff9a1187e8d15bba848b1b6db3b5296d03149b5 Mon Sep 17 00:00:00 2001
+From d83e6ecde88554ed78da6547ec9374cdf62699a8 Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Mon, 7 Mar 2016 13:40:02 +0900
-Subject: [PATCH 17/27] add gpg public key (temporary?)
+Subject: [PATCH 17/33] add gpg public key (temporary?)
 
 ---
  Master/tlpkg/gpg/pubring.gpg | Bin 0 -> 1206 bytes

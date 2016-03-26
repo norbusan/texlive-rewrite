@@ -1,7 +1,7 @@
-From d40924fa063c00cf060a38ea4647a0a1b94adb39 Mon Sep 17 00:00:00 2001
+From 7e4b2f391524273c5db30b3bd5f25b241ebd6095 Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Mon, 7 Mar 2016 18:28:58 +0900
-Subject: [PATCH 23/27] tl-update-containers needs to sign the checksum file
+Subject: [PATCH 23/33] tl-update-containers needs to sign the checksum file
 
 ---
  Master/tlpkg/bin/tl-update-containers | 2 +-

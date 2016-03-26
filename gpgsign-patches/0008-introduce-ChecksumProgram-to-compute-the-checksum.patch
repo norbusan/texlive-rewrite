@@ -1,7 +1,7 @@
-From 5f3428fcfc3d759f55aa280b5f13aee4b0dddc38 Mon Sep 17 00:00:00 2001
+From e4e704bcdf703e0a26fc50152fc359f6269749de Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Thu, 14 Jan 2016 18:59:16 +0900
-Subject: [PATCH 08/27] introduce ChecksumProgram to compute the checksum
+Subject: [PATCH 08/33] introduce ChecksumProgram to compute the checksum
 
 ---
  Master/tlpkg/TeXLive/TLConfig.pm      |  6 ++++++

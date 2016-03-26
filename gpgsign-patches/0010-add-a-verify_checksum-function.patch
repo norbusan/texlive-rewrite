@@ -1,7 +1,7 @@
-From 1d4812ce5fdd5916147005890a58571cbc009066 Mon Sep 17 00:00:00 2001
+From 48260ebfc23f715018173832d62c5c0a21f19028 Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Sat, 20 Feb 2016 23:26:38 +0900
-Subject: [PATCH 10/27] add a verify_checksum function
+Subject: [PATCH 10/33] add a verify_checksum function
 
 ---
  Master/tlpkg/TeXLive/TLUtils.pm | 53 +++++++++++++++++++++++++++++++++++++++++

@@ -1,7 +1,7 @@
-From a306ff01065e3c43923d738c574d845f01e1d626 Mon Sep 17 00:00:00 2001
+From 52b5af93cf3f5cf53661a7ea8222206fac947f97 Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Mon, 4 Jan 2016 08:32:33 +0900
-Subject: [PATCH 05/27] starting work on tlmgr/gpg
+Subject: [PATCH 05/33] starting work on tlmgr/gpg
 
 ---
  Master/texmf-dist/scripts/texlive/tlmgr.pl | 7 +++++++

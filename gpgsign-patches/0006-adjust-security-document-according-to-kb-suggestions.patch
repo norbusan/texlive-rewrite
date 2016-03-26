@@ -1,7 +1,7 @@
-From 7f511481605dcd61c0505fff7092c74fceb146a2 Mon Sep 17 00:00:00 2001
+From e7ce4e0c60fef5084f517d24c96f226492988ec6 Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Mon, 4 Jan 2016 11:23:45 +0900
-Subject: [PATCH 06/27] adjust security document according to kb suggestions
+Subject: [PATCH 06/33] adjust security document according to kb suggestions
 
 ---
  Master/tlpkg/doc/tl-security-proposal.txt | 28 ++++++----------------------

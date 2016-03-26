@@ -1,7 +1,7 @@
-From 3d75e0512249d7bab0743d8609cd5d712cd8e4ac Mon Sep 17 00:00:00 2001
+From 10b4afebf03e4409fe968467d8ac472769480b9a Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Sun, 3 Jan 2016 13:52:13 +0900
-Subject: [PATCH 02/27] TLOBJ: support sha256, make_container returns sha256,
+Subject: [PATCH 02/33] TLOBJ: support sha256, make_container returns sha256,
  use that
 
 ---

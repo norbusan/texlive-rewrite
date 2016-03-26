@@ -1,7 +1,7 @@
-From e26fd5c5b0d394a768ba4510b44aaa4a7e0cb02d Mon Sep 17 00:00:00 2001
+From 80e278693f859cac95507ff960161da74044a97c Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Wed, 6 Jan 2016 09:19:30 +0900
-Subject: [PATCH 07/27] replace sha256 with generic checksum
+Subject: [PATCH 07/33] replace sha256 with generic checksum
 
 We use tldigest($string) or tlchecksum($file) to generate checksum.
 The algorithm can be changed at any time provided that tldigest

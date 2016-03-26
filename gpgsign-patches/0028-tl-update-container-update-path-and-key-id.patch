@@ -1,0 +1,29 @@
+From 9b7e35505e8280e4143e96dd0444ba2c952d4732 Mon Sep 17 00:00:00 2001
+From: Norbert Preining <norbert@preining.info>
+Date: Sat, 19 Mar 2016 11:53:10 +0900
+Subject: [PATCH 28/33] tl-update-container: update path and key id
+
+---
+ Master/tlpkg/bin/tl-update-containers | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/Master/tlpkg/bin/tl-update-containers b/Master/tlpkg/bin/tl-update-containers
+index ad83e9e..e4a5677 100755
+--- a/Master/tlpkg/bin/tl-update-containers
++++ b/Master/tlpkg/bin/tl-update-containers
+@@ -386,9 +386,9 @@ sub main
+   if (chdir("$opt_location/tlpkg/")) {
+     xsystem("md5sum texlive.tlpdb > texlive.tlpdb.md5");
+     xsystem("$TeXLive::TLConfig::ChecksumProgram texlive.tlpdb > texlive.tlpdb.checksum");
+-    xsystem("echo TODO TODO gpg --homedir PATH/TO/SECRECT_KEY_HOME \
+-        --passphrase-file PATH/TO/PASSPHRASE/FILE   \
+-        --armor --detach-sign --local-user 0x3E57E2CA1312AC2E texlive.tlpdb.checksum");
++    xsystem("gpg --homedir /home/texlive/.gnupg \
++        --passphrase-file /home/texlive/.gnupg/passphrase  \
++        --armor --detach-sign --local-user 0x06BAB6BC texlive.tlpdb.checksum");
+     xchdir($olddir);
+   } else {
+     tlwarn("chdir($opt_location/tlpkg/) for md5/checksum creation failed\n: $?");
+-- 
+2.8.0.rc3
+

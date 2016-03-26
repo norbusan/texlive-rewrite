@@ -1,0 +1,182 @@
+From d0dd847cbfe2f6fbd66c62c77ef4760bb50c97c5 Mon Sep 17 00:00:00 2001
+From: Norbert Preining <norbert@preining.info>
+Date: Fri, 25 Mar 2016 16:47:23 +0900
+Subject: [PATCH 33/33] switch consistently to sha512 for all checksums, sign
+ installer and iso etc
+
+---
+ Master/tlpkg/TeXLive/TLConfig.pm       |  3 +++
+ Master/tlpkg/TeXLive/TLUtils.pm        |  6 +++---
+ Master/tlpkg/bin/tl-update-containers  |  4 ++--
+ Master/tlpkg/bin/tl-update-images      | 23 +++++++++++++++++------
+ Master/tlpkg/bin/tl-update-install-pkg |  6 +++++-
+ Master/tlpkg/bin/tl-update-tlcritical  |  8 ++++++--
+ 6 files changed, 36 insertions(+), 14 deletions(-)
+
+diff --git a/Master/tlpkg/TeXLive/TLConfig.pm b/Master/tlpkg/TeXLive/TLConfig.pm
+index 1d3cd19..9c210be 100644
+--- a/Master/tlpkg/TeXLive/TLConfig.pm
++++ b/Master/tlpkg/TeXLive/TLConfig.pm
+@@ -52,6 +52,7 @@ BEGIN {
+     $F_OK $F_WARNING $F_ERROR $F_NOPOSTACTION
+     $ChecksumLength
+     $ChecksumProgram
++    $ChecksumExtension
+   );
+   @EXPORT = @EXPORT_OK;
+ }
+@@ -223,6 +224,8 @@ $ChecksumLength = 128;
+ # argument
+ $ChecksumProgram = "sha512sum";
+ 
++# The extension of the checksum file
++$ChecksumExtension = "sha512";
+ 
+ 1;
+ 
+diff --git a/Master/tlpkg/TeXLive/TLUtils.pm b/Master/tlpkg/TeXLive/TLUtils.pm
+index 67709a1..4b17641 100644
+--- a/Master/tlpkg/TeXLive/TLUtils.pm
++++ b/Master/tlpkg/TeXLive/TLUtils.pm
+@@ -3747,8 +3747,8 @@ sub download_to_temp_or_file {
+ 
+ =item C<< verify_download($file, $url) >>
+ 
+-Verifies a download of C<$url> into C<$file> by checking C<$url.checksum>
+-and if gpg is available, verifying that with C<$url.checksum.asc>.
++Verifies a download of C<$url> into C<$file> by checking C<$url.sha512>
++and if gpg is available, verifying that with C<$url.sha512.asc>.
+ 
+ Returns 0 on success, -1 on connection error, 1 on checksum error.
+ In case of errors returns an informal message as second argument.
+@@ -3758,7 +3758,7 @@ In case of errors returns an informal message as second argument.
+ sub verify_download {
+   my ($file, $url) = @_;
+   # download checksum file
+-  my $checksum_url = "$url.checksum";
++  my $checksum_url = "$url.$TeXLive::TLConfig::ChecksumExtension";
+   my $signature_url = "$checksum_url.asc";
+ 
+   my $checksum_file = download_to_temp_or_file($checksum_url);
+diff --git a/Master/tlpkg/bin/tl-update-containers b/Master/tlpkg/bin/tl-update-containers
+index e4a5677..f06075a 100755
+--- a/Master/tlpkg/bin/tl-update-containers
++++ b/Master/tlpkg/bin/tl-update-containers
+@@ -385,10 +385,10 @@ sub main
+   chomp (my $olddir = `pwd`);
+   if (chdir("$opt_location/tlpkg/")) {
+     xsystem("md5sum texlive.tlpdb > texlive.tlpdb.md5");
+-    xsystem("$TeXLive::TLConfig::ChecksumProgram texlive.tlpdb > texlive.tlpdb.checksum");
++    xsystem("$TeXLive::TLConfig::ChecksumProgram texlive.tlpdb > texlive.tlpdb.$TeXLive::TLConfig::ChecksumExtension");
+     xsystem("gpg --homedir /home/texlive/.gnupg \
+         --passphrase-file /home/texlive/.gnupg/passphrase  \
+-        --armor --detach-sign --local-user 0x06BAB6BC texlive.tlpdb.checksum");
++        --armor --detach-sign --local-user 0x06BAB6BC texlive.tlpdb.$TeXLive::TLConfig::ChecksumExtension");
+     xchdir($olddir);
+   } else {
+     tlwarn("chdir($opt_location/tlpkg/) for md5/checksum creation failed\n: $?");
+diff --git a/Master/tlpkg/bin/tl-update-images b/Master/tlpkg/bin/tl-update-images
+index 6e4521c..b96246b 100755
+--- a/Master/tlpkg/bin/tl-update-images
++++ b/Master/tlpkg/bin/tl-update-images
+@@ -76,7 +76,7 @@ MAKEINST ()
+   echo "-- `date` Writing image to $iso"
+ 
+   # remove old images and checksums.
+-  rm -f $prefix-*.iso* $prefix-*.md5 $prefix-*.sha256
++  rm -f $prefix-*.iso* $prefix-*.md5 $prefix-*.sha256 $prefix-*.sha512
+ 
+   # the image consists of the tlnet tree and the top-level files
+   # from master, more or less.
+@@ -131,18 +131,25 @@ MAKEINST ()
+   # make checksums
+   # and symlinks with short names (potentially used in /etc/fstab).
+   for ext in ""; do  # used to do .xz here too
+-    rm -f $prefix.iso$ext $prefix.iso$ext.md5 $prefix.iso$ext.sha256
++    rm -f $prefix.iso$ext $prefix.iso$ext.md5 $prefix.iso$ext.sha256 $prefix.iso$ext.sha512
+     
+     (cd $target && md5sum `basename $iso$ext`) >$iso$ext.md5
+-    (cd $target && sha256sum `basename $iso$ext`) >$iso$ext.sha256
++    (cd $target && sha512sum `basename $iso$ext`) >$iso$ext.sha512
++    (cd $target && gpg --homedir /home/texlive/.gnupg \
++        --passphrase-file /home/texlive/.gnupg/passphrase  \
++        --armor --detach-sign --local-user 0x06BAB6BC $iso$ext.sha512)
+ 
+     ln -s `basename $iso$ext` $prefix.iso$ext
+     
+-    # for md5 and sha256, have to adjust the filename embedded in the file.
++    # for md5 and sha512, have to adjust the filename embedded in the file.
+     sed s,-$D,, $iso$ext.md5 >$prefix.iso$ext.md5
+-    sed s,-$D,, $iso$ext.sha256 >$prefix.iso$ext.sha256
++    sed s,-$D,, $iso$ext.sha512 >$prefix.iso$ext.sha512
+     #ln -s `basename $iso`$ext.md5 $prefix.iso$ext.md5
+     #ln -s `basename $iso`$ext.sha256 $prefix.iso$ext.sha256
++
++    gpg --homedir /home/texlive/.gnupg \
++        --passphrase-file /home/texlive/.gnupg/passphrase  \
++        --armor --detach-sign --local-user 0x06BAB6BC $prefix.iso$ext.sha512
+     
+     ls -l $iso$ext
+   done
+@@ -183,7 +190,11 @@ do_tar ()
+   if test $? -ne 0; then
+     echo "$0: tar failed, goodbye." >&2
+   fi
+-  (cd $target && sha256sum `basename $tarfile`) >$tarfile.sha256
++  (cd $target && sha512sum `basename $tarfile`) >$tarfile.sha512
++  (cd $target && gpg --homedir /home/texlive/.gnupg \
++       --passphrase-file /home/texlive/.gnupg/passphrase  \
++       --armor --detach-sign --local-user 0x06BAB6BC $tarfile.sha512)
++
+   ls -l $tarfile
+ }
+ 
+diff --git a/Master/tlpkg/bin/tl-update-install-pkg b/Master/tlpkg/bin/tl-update-install-pkg
+index 158b63b..2bf8954 100755
+--- a/Master/tlpkg/bin/tl-update-install-pkg
++++ b/Master/tlpkg/bin/tl-update-install-pkg
+@@ -33,6 +33,7 @@ $Getopt::Long::autoabbrev=0;
+ use TeXLive::TLPDB;
+ use TeXLive::TLPOBJ;
+ use TeXLive::TLUtils qw(:DEFAULT mkdirhier copy get_system_tmpdir);
++use TeXLive::TLConfig;
+ 
+ $opt_help = 0;
+ $opt_verbose = 0;
+@@ -235,7 +236,10 @@ sub install_files {
+   for my $f ("install-tl-unx.tar.gz", "install-tl.zip",
+              "install-tl-windows.exe") {
+     copy ("$tmpdir/$f", $outputdir);
+-    system ("cd $outputdir && sha256sum $f >$f.sha256");
++    system ("cd $outputdir && $TeXLive::TLConfig::ChecksumProgram $f >$f.$TeXLive::TLConfig::ChecksumExtension");
++    system ("cd $outputdur && gpg --homedir /home/texlive/.gnupg \
++            --passphrase-file /home/texlive/.gnupg/passphrase  \
++            --armor --detach-sign --local-user 0x06BAB6BC $f.$TeXLive::TLConfig::ChecksumExtension");
+     system ('ls', '-l', "$outputdir/$f");
+   }
+ 
+diff --git a/Master/tlpkg/bin/tl-update-tlcritical b/Master/tlpkg/bin/tl-update-tlcritical
+index 37bf367..c6052e8 100755
+--- a/Master/tlpkg/bin/tl-update-tlcritical
++++ b/Master/tlpkg/bin/tl-update-tlcritical
+@@ -44,11 +44,15 @@ do_updater ()
+   mv $newfile $tlcrit            # move new file
+   #
+   # make checksum for new file
+-  (cd $tlcrit && sha256sum $newfile >$newfile.sha256)
++  (cd $tlcrit && sha512sum $newfile >$newfile.sha512)
++  (cd $tlcrit && gpg --homedir /home/texlive/.gnupg \
++      --passphrase-file /home/texlive/.gnupg/passphrase  \
++      --armor --detach-sign --local-user 0x06BAB6BC $newfile.sha512)
+   #
+   # link to generic names
+   (cd $tlcrit && ln -s $newfile update-tlmgr-latest.$type)
+-  (cd $tlcrit && ln -s $newfile.sha256 update-tlmgr-latest.$type.sha256)
++  (cd $tlcrit && ln -s $newfile.sha512 update-tlmgr-latest.$type.sha512)
++  (cd $tlcrit && ln -s $newfile.sha512.asc update-tlmgr-latest.$type.sha512.asc)
+ }
+ 
+ # additionally disabled packages
+-- 
+2.8.0.rc3
+

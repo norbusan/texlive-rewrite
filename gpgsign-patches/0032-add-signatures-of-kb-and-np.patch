@@ -1,0 +1,59 @@
+From 385bde731ee90b2fb2a5aaeccec7f69a92bbe049 Mon Sep 17 00:00:00 2001
+From: Norbert Preining <norbert@preining.info>
+Date: Sun, 20 Mar 2016 12:05:28 +0900
+Subject: [PATCH 32/33] add signatures of kb and np
+
+---
+ Master/tlpkg/gpg/pubring.gpg | Bin 2070 -> 3521 bytes
+ Master/tlpkg/gpg/trustdb.gpg | Bin 1280 -> 1280 bytes
+ 2 files changed, 0 insertions(+), 0 deletions(-)
+
+diff --git a/Master/tlpkg/gpg/pubring.gpg b/Master/tlpkg/gpg/pubring.gpg
+index a7e2ad5255adef2a4857c4b63eae0e92384168f0..bd45ffd6c024b52fda3b0481da166f85030f2e1b 100644
+GIT binary patch
+delta 1477
+zcmV;$1v>hc5WyR;e*%Ar0XPH`0RjLb0viJc3ke7Z0|EvW2m%QT3j`Jd0|5da0Rk6*
+z1p-#=(2W2J2@nllU6BU5w!8t>2mtWjj?V*u7-f*Rkmn4)z+c^eHA4QGX`%71Ib~+2
+zCv8hcbb&WNk84@0pzaG<2$S_#nOQSAX$uFT$;9Ig*O;kEyqbS&6Z!!j_ZxRY+=aoi
+zhGnlKcCnu$k2NZWm}S&^lSImX6njQ92!6J4pxyND^Tz~f9}hYRQAA6hS=UnGxzs?l
+z_9r)QM#SU}It5w>;m~H#r6O$glUXba)+Qn{jb?|mcE7%UFKOT<;zjAQMlcdsH(Cj0
+zL^X?3zPduc6ykq7(vqm#h||$qiTTyS`{CB=a3hzZA#M(1*HWqcxWI>XaTY;|0Qh7q
+znl~x{7rrV8E=!o~Wt^-HwS}@=umS)Bi2@u15CIAR1_c6E?gNVe3JDNwtfWYW4BQi1
+z><|E(Xg>#kjh(#CxH69O-Gc<s$!H6!Yysh|shfzM_|kv)pSGB#(-B-V6X;CvOa8E~
+zS*Cr9sN>VW(n1v$RUjBX28}h6&~~RdzI-|)j0zsL*ggzB0U84JB`uu8AP<F7v<i=B
+z;m#%!@Y>jr^-Q@0+C#llL)QHTAhfnDWkwV;m^LA80^rG)zIWFVd>EA|xc9Ca5}(EG
+z5l5-&;81^6CT$J`kCwSr)uvuR%%_69>;@M<eGTTwiXI`Dv{gk{K<qDn*Y}`8?BmBG
+zp04FyOcEX!nrIW{$tQ1M$$}TkUiSSOE8~4hadNAiARmG5q({QVc+fuS@h_hS=w-#v
+zJ9^`JCNh$g7BbKUd9=*1+!D{p7wZ>XGok?wQGkDwPkJN&Qb<uE{WhmPgPP^2;Ujlg
+zdxVE|g7Lm3okYXc^d9n&$@`!|N>RG^#0xKW%p+(rjY;#qAJzaWgn^NLAz4nw+U|7L
+zfUzhm5eAD01jPZH3;3%BTxd-d+=Pq`56*_(pUuN2W7q*Db(@RIMGm75$mU15Fi@o1
+zys&=-BD;M$u9wKV*W{^r(b!;)2hr_kyp&7)P>{>=*S9J{r~Yb@ZKFciSt=r*Dzwtm
+zyUq1mTyd=TsuNc+o4Jg|Q`O%8E!_R>{tx=iy7|bxS5Y6{<Nlsle{9j3&_0uiGU>Ij
+z0ssJs0UQJn0RjL91p-#@I1&H~2@nSsbc%m4(N(P>#0URT7t?XTmc(-fbqW8qKn6+l
+z`%<!zJnwUBs-9E*<Dm&l*>q(s{~>BmQa?o7s$%S>H^SN3?y40W{umbVSixRnhLkL#
+zQ0UdZAV!=WVn~}aDuu7&Hcu`FI{Sev`4~gj#cJYuzPZRs63NN|84-|%l3hIw@#=p!
+z*r-R*5)a-6Ao!L!V)g-VJAKD2Hb{9eC=`W@X<8!ikRttGcfCC(_R_B(Q8N8N8C;Go
+zk_g~2kh_<*3IIv`Fm67rc4_`2M_D1CocB$j1fC-IQ=f>lHa?v>C3yYnSAnLdx_$*(
+zKN?WW-0#D@b7HERWa|OByxen##yk$y#kJv&o2A&bAFu)d0JDDrJOY1-0Urby0RjLC
+z0vikk0#@wM>i`M~5Di{kkp{Z9yw^wv|7S3!i7+;GtE(ocZ#67{2#@WjqJgBvn6`Vd
+zPVh!b({;`|qu^q}awkXtn^u?o&Z=@c*$*GTuCp3w%30`OELvfiVi{5<H7tHvEFP1?
+zv_J%qWVSr9mm77*B8`7>-0<Fckwmz^0=C)m<?x<%C#WNc6;z5aya(Z#t_mj1eG1q$
+z!9ihh94%9hKme|H#rTYlq*~!Kz@u`<lEy~70dlYTYK_$if7u6qk}u$t4A$s*PE+4Y
+z4y9Qz1H4b~|1Ek?prSdwSRJ;{NB^Rbp=blyR4TsQ+8ilxLJ}kc-YpIGfx~;`S62^-
+f2ZqW-w;n?n56*S5)hBP7Qygwji)>-Dw*+4U)pVui
+
+delta 17
+YcmX>oJxyRkJ=10ub{nS6X<X6F05&cKF#rGn
+
+diff --git a/Master/tlpkg/gpg/trustdb.gpg b/Master/tlpkg/gpg/trustdb.gpg
+index 735a34ce00f6b594f6a9a1e85cf3f20b56bff1ff..df153bb4cc26b6471f28462e6d5d34694c6b566f 100644
+GIT binary patch
+delta 28
+jcmZqRYTy!JOfN`hW@cn%WMW_ld+(S#(NKJ&`b`!9R|E$1
+
+delta 32
+ocmZqRYTy!KOfN`hW@cn%WMW_ld$ayZ<d&INCJG8~RKLjr0EtuzAOHXW
+
+-- 
+2.8.0.rc3
+

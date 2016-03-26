@@ -1,7 +1,7 @@
-From 46ff5faf9106cb9c9d2347eb72be25918d4c990b Mon Sep 17 00:00:00 2001
+From 4f89a8b03460c7a4f484dad2596645c38e7519ca Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Sun, 3 Jan 2016 13:56:13 +0900
-Subject: [PATCH 03/27] add security proposal document
+Subject: [PATCH 03/33] add security proposal document
 
 ---
  Master/tlpkg/doc/tl-security-proposal.txt | 62 +++++++++++++++++++++++++++++++

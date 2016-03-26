@@ -1,7 +1,7 @@
-From 1f20dffbb540b51688faaa06c83642f10636d64c Mon Sep 17 00:00:00 2001
+From 646195c0ab1238698bb2bad2202e6c1b95cf4c3d Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Sun, 21 Feb 2016 00:08:55 +0900
-Subject: [PATCH 13/27] work on gpg verification function
+Subject: [PATCH 13/33] work on gpg verification function
 
 ---
  Master/tlpkg/TeXLive/TLPDB.pm   |  5 ++++

@@ -1,0 +1,187 @@
+From d72dbf8a54bcd6ee897db97d673bd8efd4aa634f Mon Sep 17 00:00:00 2001
+From: Norbert Preining <norbert@preining.info>
+Date: Sat, 19 Mar 2016 11:53:32 +0900
+Subject: [PATCH 29/33] update sec document
+
+---
+ Master/tlpkg/doc/tl-security-proposal.txt | 149 ++++++++++++++++++++++--------
+ 1 file changed, 111 insertions(+), 38 deletions(-)
+
+diff --git a/Master/tlpkg/doc/tl-security-proposal.txt b/Master/tlpkg/doc/tl-security-proposal.txt
+index 7da5a52..9c972eb 100644
+--- a/Master/tlpkg/doc/tl-security-proposal.txt
++++ b/Master/tlpkg/doc/tl-security-proposal.txt
+@@ -1,8 +1,10 @@
+ Security Proposal for TeX Live
+ ==============================
+-(last change NP 2016-03-07)
++(last change NP 2016-03-19)
+ 
+ Changelog:
++* 20160319
++	key management, rewrite
+ * 20160307
+ 	use md5 for location digest - saved tlpdb filename
+ 	switch to sha512
+@@ -10,50 +12,121 @@ Changelog:
+ 	initial document
+ 
+ 
+-We use md5 sums in the following places:
+-1) md5sum of the texlive.tlpdb in texlive.tlpdb.md5 in tlnet/tlcritical
+-   and all the normal dists
+-2) md5 sum of *location* string of remote end
+-   - if the database is present (tlpkg/texlive.tlpdb.MD5SUM) and the
+-     md5sum downloaded from 1) and the saved md5sum agree, do not
+-     redownload the remote tlpdb but use local copy
+-3) md5sum of containers (.tar.xz)
+-   are checked now only during installation, after my commit also
+-   from tlmgr
++Aim is to give higher security and verification level to downloaded
++and installed packages of TeX Live. There are two possible attacks
++we want to detect:
+ 
+-It would make sense to replace some or all of the above with sha256.
+-2) is the only one we could keep as md5, but I propose that if
+-we switch, then we switch all the md5 to sha512.
++Attack scenaria
++===============
++breach of ctan mirror
++	can be detected via gpg signature
++breach of tug.org
++	revoke subkey
++	inform CTAN to tear down all mirrors
++	maybe have tlmgr action update-pubkey for receiving new subkey?
++	prepare new repo with new signing subkey
+ 
+-	Change 20160307
+-	I made changes that 2) remains as MD5 (tl_short_digest)
+-	so that the generated filenames are not exorbitant long
+-	(like for sha512).
+ 
+-In principle my idea about security setup is as follows:
++TODO
++* location of the gpg keys
++  texlive.infra or new package texlive.keys
++  texlive.keys should be treated with special priority and updated
++  before anything else (?)
+ 
++
++Definitions:
++* checksum: defined via tl_checksum, currently is sha512
++* short checksum: defined via tl_short_digest, currently md5
++
++
++Verification Level 1: tlpdb
++===========================
++When a tlpdb is downloaded from the remote server there are two
++steps of verification:
++* download tlpdb
++* download tlpdb.checksum
++* if gpg is available
++  - download tlpdb.checksum.gpg
++  	. if not available, continue without error!
++  - verify gpg signature
++  	. if success, continue
++	. if failure, error out
++* verify tlpdb checksum
++
++Verification Level 2: containers
++================================
++The tlpdb ships size and checksum information of each container.
++These are verified after download.
++
++
++Verification of the installer
++=============================
+ For the installer
+ * installer packages are sha512 hashed (already done!)
+ * the sha512 files are gpg signed with our gpg tlnet key
+ * our public gpg key is included in texlive.infra package
++  (or in a separate texlive.keys package!)
++
++
++Other usage
++===========
++short checksum of *location* string of remote end
++if the database is present (tlpkg/texlive.tlpdb.MD5SUM) and the
++md5sum downloaded from 1) and the saved md5sum agree, do not
++redownload the remote tlpdb but use local copy
++
++
++Key management
++==============
++One master key TeX Live <tex-live@tug.org> which is kept
++offline at kb and np
++
++On signing sub key which is kept on tug.org for automatic signing of tlpdb.
++
++
++Key generation howto
++====================
++
++BASE=.../
++MAIN=$BASE/main
++SUB=$BASE/sub
++PUBONLY=$BASE/pub
++
++create gpg key
++--------------
++(To be done only once or when key is compromised!)
++	gpg --homedir $MAIN --no-use-agent genkey
++    ....
++   
++   gives keyid KEYID  (now 0x06BAB6BC)
++
++   this key expires after 18 month, needs to be extended each year!
++
++create signing sub key
++----------------------
++(needs to be done when we feel like it, not necessary for each year)
++
++	gpg --homedir $MAIN --no-use-agent --expert --edit-key $KEYID
++	gpg> addkey
++	...
++	choose 4 (RSA (sign only)), expires 18m
++
++create subkey only dir for tug.org
++----------------------------------
++with gpg <= 2.0 we need to export secret subkeys, remove secret subkey
++(that removes all), and import only subkeys back in
++	rm -rf $SUB
++	cp -a $MAIN $SUB
++	gpg --homedir $SUB --no-use-agent --output secret-subkeys --export-secret-subkeys $KEYID
++	gpg --homedir $SUB --no-use-agent --delete-secret-key $KEYID
++	gpg --homedir $SUB --no-use-agent --import secret-subkeys
++
++
++create pubkey only dir for inclusion in texlive repo
++----------------------------------------------------
++	rm -rf $PUBONLY
++	cp -a $SUB $PUBONLY
++	gpg --homedir $PUBONLY --no-use-agent --delete-secret-key $KEYID
++	rm $PUBONLY/*~
+ 
+-For the rest (installation or update from remote)
+-* install-tl/tlmgr downloads the texlive.checksum.gpg and
+-  texlive.checksum
+-* verifies that this is ok
+-* if yes, download the texlive.tlpdb and check the checksum
+-  value of it (this is the reason we should switch from
+-  md5 to sha512, as md5 is AFAIR fakeable)
+-* if all succeed, do the usual verification of each
+-  container only by sha512 (instead of md5)
+-
+-There is no need to sign each container, as we are having
+-indirectly signed sha512 hashes of the containers
+-(in the tlpdb, which is sha512-ed, and then signed).
+-
+-Usage:
+-* if gpg is found, try to use it, otherwise just
+-  give warning about how to verify/gpg necessary
+-* only if gpg is available, download .sha512.asc and
+-  verify
+ 
+-- 
+2.8.0.rc3
+

@@ -1,7 +1,7 @@
-From d5bfc2f4868d41a8e3a66a2f38d9011eba2df03d Mon Sep 17 00:00:00 2001
+From 02d21ef5f576cb7fa0cc17418571565c6c4f3595 Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Sun, 3 Jan 2016 13:36:17 +0900
-Subject: [PATCH 01/27] use sha256 for remote tlpdb and location checks
+Subject: [PATCH 01/33] use sha256 for remote tlpdb and location checks
 
 ---
  Master/texmf-dist/scripts/texlive/tlmgr.pl | 14 +++++++-------

@@ -1,7 +1,7 @@
-From e78fb575a83e88f3f827cf3bd92b3a5363e15c71 Mon Sep 17 00:00:00 2001
+From 9c3c3671f809092d61901fd28ea24c6300e5d2d0 Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Sat, 19 Mar 2016 09:08:07 +0900
-Subject: [PATCH 26/27] wording fixes
+Subject: [PATCH 26/33] wording fixes
 
 ---
  Master/tlpkg/TeXLive/TLPOBJ.pm        | 10 +++++-----

@@ -1,0 +1,25 @@
+From c2dc54da834dd42cd1bd7b37910b3d104f574165 Mon Sep 17 00:00:00 2001
+From: Norbert Preining <norbert@preining.info>
+Date: Sat, 19 Mar 2016 13:39:12 +0900
+Subject: [PATCH 31/33] small edit concerning expiry of main key
+
+---
+ Master/tlpkg/doc/tl-security-proposal.txt | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/Master/tlpkg/doc/tl-security-proposal.txt b/Master/tlpkg/doc/tl-security-proposal.txt
+index 9c972eb..57cefd1 100644
+--- a/Master/tlpkg/doc/tl-security-proposal.txt
++++ b/Master/tlpkg/doc/tl-security-proposal.txt
+@@ -100,8 +100,6 @@ create gpg key
+    
+    gives keyid KEYID  (now 0x06BAB6BC)
+ 
+-   this key expires after 18 month, needs to be extended each year!
+-
+ create signing sub key
+ ----------------------
+ (needs to be done when we feel like it, not necessary for each year)
+-- 
+2.8.0.rc3
+

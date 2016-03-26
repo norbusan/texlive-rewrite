@@ -1,7 +1,7 @@
-From fcd7378969e2f003311d4ed054655856e32e678d Mon Sep 17 00:00:00 2001
+From 30f8c44818acc48325f0f217cb91847f39dbbc01 Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Sat, 19 Mar 2016 09:48:49 +0900
-Subject: [PATCH 27/27] make verify_* return values numeric with informal
+Subject: [PATCH 27/33] make verify_* return values numeric with informal
  messages
 
 ---

@@ -1,0 +1,107 @@
+From 2bb39f1b356dda07634c62c7be34a3eff0fbd1db Mon Sep 17 00:00:00 2001
+From: Norbert Preining <norbert@preining.info>
+Date: Sat, 19 Mar 2016 11:54:20 +0900
+Subject: [PATCH 30/33] update gpg directory with current key
+
+---
+ Master/tlpkg/gpg/pubring.gpg | Bin 1206 -> 2070 bytes
+ Master/tlpkg/gpg/random_seed |   1 +
+ Master/tlpkg/gpg/trustdb.gpg | Bin 1280 -> 1280 bytes
+ 3 files changed, 1 insertion(+)
+ create mode 100644 Master/tlpkg/gpg/random_seed
+
+diff --git a/Master/tlpkg/gpg/pubring.gpg b/Master/tlpkg/gpg/pubring.gpg
+index 35c557c35f194b2941f074181740591f14bc6439..a7e2ad5255adef2a4857c4b63eae0e92384168f0 100644
+GIT binary patch
+literal 2070
+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
+
+literal 1206
+zcmV;n1WEgu0SyFJ-0Oh>2msU72NEe2jMJDJenkS36z(C$7v-)5gMdT@2K=@2$@vS_
+zq}~TiL1%v6w>yg-3!C&%Gb^nB3>WE>T_Lriu#Z;%obEtZ?xSvgKXlp?lt*l$<Di-5
+zzPnmBXvBr;v{xumNbg^ZxVT-6{eOU*(wegq^+^JgK%2J+()Xq=6f}M|3u$xdBZcrj
+znP3_@A?QHH1>Lth$W@5VFoX#m1G>c|fDQ8A<P$+#eC81}lLi36;b7xu-4CVa>Z-mr
+zlGD`0Zfoo+o(}MS+~$<)yoH-x042r(gBs3;$9dtV%h?k0H~j0khOtjO6H(&<r7RsH
+z)7KqD6U;j$;Ubb=YHa`!0RRECFjQq&AWUg?WgtXpb98cPVs&(BZ*Cw<WqBYnFfleD
+zJalDvY-x67Ky-CyE^l&YK8XQ01QP)Y03iheR^01>0viJb3ke7Z0|gZd2?z@X76JnS
+z00JHX0vCV)3JDNCSK`VO609yM83+KwQf2MaVS`e5bnAG-fLiLua>6+QmH!cIG{lf2
+z@O3LaPxUz8_ARgpOgrJN!gw+1O$esz6d_!|5vL62-T)x^p2?W5?Cpt6>oWToEcw${
+zTJTrPTE?CsPVF`lNX6T?8hdBc@)-$j=m+3%nLR#Y<{M<9mLihZ?Xb3ic7e1yvneef
+zFJafCsf?thFQk;$|Kj7kshm?`jo$&{^<M{<{*hLlJH96pmbBX6X=D?CktmLyooZtB
+zJy7^W@;vm=4d}he3V5&JSarFdrQG4qQ>B%762pLvqY&gl=KctAk9uhW7B{vSIt~KH
+zgEfP*)?dvhiS%u0q-O;;yCLVW0ssTK0SyFJ-0Oh>2mr5{Rdt!1WAJbXJ|Wii!C5Zu
+z2{3@p$U(2@5X6vX|9}8&Xoe{w2_H=M{>k$Ml+kl+8R0<{!Fv`{<!fPk<Y&7hJgRt!
+zWmf^|5G;t{1j<p%E^2nCa>ptC3);O+UsR4ENhrZKr>QZ>9#VA-eDr;z{V)&t%LP)i
+zlsE@i5cKxoRzZ77;Q2v#Zv!@{TwW&a`F&9ZG~1I`%^}!4F}$$R`%7*~xF$Kl7R%)w
+zELuwhm6%6rGVKRMb8g-FlsPjC4*t`EKnaf&2IRD`wGtaa!|VD5WsC8Cj3uG4zxwS0
+zai^BzjbWA}H*HVo4SGL19!X*cIO2SoLig(a0w(|w0RRDs0Urby0SW*K1p-#w>wy9r
+z3;+rV5I$Gp$`cZ-F2no>|5IVVR#V~j2vYg&Y;sHY+t14Xv0tMi77j&L?V?bVa!t^Z
+z>S0ng3-`<{$uPGS;Z-Qa-ZdW{*JkTF%d{v`SkKw!qTRkEb94iV6J|Up4s0>d#F-cS
+zC?vpj;m;b(jz%jINuN302hKea0-dpqTF{uXL#YE=GzVeC<Uak2jg8fMlm$k{9;KC3
+zt~FSj$%aX2*|=iCq0SYIJOy?_(E|w3p5$fUwS3XW-!zKIGvJ%+na}&_D|hKS81{11
+zJ7z!pYwADTuZ68bJRU@eMksRxbip}3`B{%tr!N8Bon0XKzmA4%jJ!lds_afzBT^P?
+U<cxJIoa4h^9Ycs4bg%*d13+gckpKVy
+
+diff --git a/Master/tlpkg/gpg/random_seed b/Master/tlpkg/gpg/random_seed
+new file mode 100644
+index 0000000..0d7bba6
+--- /dev/null
++++ b/Master/tlpkg/gpg/random_seed
+@@ -0,0 +1 @@
++æcf4Ü≠ noﬁµã®Øß$ﬁ¨ƒy“∏˙®¢içùˇ∂gUî$Zë»XX¿ëÆk≤RKH¬–£⁄f€Bˆ⁄N™œ}\ﬁ<“ eãÛlØì#*k^5í˚"Jﬂu≥áÛqL1°&&ã∏ooÒ˝›´W‡ÓÜ”dΩ–;œXØ*w˝y54d˘AÑx´èÃ˙:F.áÛg5]£Ùs≥ñ⁄≈≥*c ?$∞÷xbÕC·π∞ûπ‡%≥(ÁÎéÆë$·µ$ˇ.WzÌbÁÛlÖ¥,˛ı„∫ÌÓ%6Eïé•∫	>ÊÖ©ä\pküL>øÿSnEG®¶r[ﬁfà©é ÆpÍruπ˜¸ßˆóJØ`„∏#®ﬂ?˝\C-`7§pºﬁ˚’Â_ÅÓ‘ø[J]îíG`Ÿ‰§B¶Ç{¿ﬁ•/<ê¸Vû◊¨«¡ô+û’C∞îiZQ&hÎL∏ÊZ÷,ÆkÆ[}‰q∆/›∫¡P¸DD‚ëxï≠ˆüyœ©∂hõ§jÖ⁄ˆ‘w3Â∂Œ>ZCèfåsÚÖê„ÉûkÇV„d.7$Í≥¡∑	™û}d‘ŸAXé∞ŸÕe{ÕÖ>'YQpÏ.K‚¥ﬁ?SÌ‡"SycMåfOÛµÕHs!Ô^ œÏêöπ:ô^ä®Ùáèy≈∫b˘H∆ÂI„¨‰#=hq3ô0zˆŸƒ{ù≠ü*—R≈Ãò”öQ$∞¿¥™¿Âcs‹‘'†»”`í´5÷‹√‚≈†xFÁGÒﬂÛÓˆg∂≠DÇwÇ˘
+\ No newline at end of file
+diff --git a/Master/tlpkg/gpg/trustdb.gpg b/Master/tlpkg/gpg/trustdb.gpg
+index 0ca85af83284ff5c2d884c7fb1759ee2f0fe36a1..735a34ce00f6b594f6a9a1e85cf3f20b56bff1ff 100644
+GIT binary patch
+delta 120
+zcmZqRYTy!KOfN`hW@cn%WMW_ld$ayZ<d&INCJG8~RIg&5oXR3UG2lZ055w{9rW?nn
+z3Vok*;Q9&PxY&toySD9NV*mqr2n8Z}8BV_on|m{&>S2SOp!?zI&kE`sD&|mi2xSZa
+DHWVS?
+
+literal 1280
+zcmZQfFGy!*W@Ke#VqgfnYjU0eJ7DC(E{-8OstzMazyhP;G8!(R5Ezl^Kn{D{Ba0Fn
+zE<6mM7o9J+yO%P%xoEYQUHGF@!a{5G*dRv9BTVFFxa=yC7vFt6ygu}>_Ufh9rYqyb
+L-a^$OlraDRXq6aT
+
+-- 
+2.8.0.rc3
+

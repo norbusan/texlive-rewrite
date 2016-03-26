@@ -1,7 +1,7 @@
-From fd836ef76b203b293e5a0ea9e49f93b4dd9bac4c Mon Sep 17 00:00:00 2001
+From fc796c0ce014d44aeddadea21238ee6916d1ecbe Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Mon, 7 Mar 2016 18:16:12 +0900
-Subject: [PATCH 22/27] unify the verify_* functions, simplify code, verify
+Subject: [PATCH 22/33] unify the verify_* functions, simplify code, verify
  checksum file
 
 ---
