@@ -1,7 +1,7 @@
-From cd032129d0d0b4509aee9776b49354e4bbd87d70 Mon Sep 17 00:00:00 2001
+From 148c6beb9e1a2fc2da4c11869b76800ea08be8b2 Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Mon, 7 Mar 2016 17:47:49 +0900
-Subject: [PATCH 21/33] update security outline
+Subject: [PATCH 21/39] update security outline
 
 ---
  Master/tlpkg/doc/tl-security-proposal.txt | 37 +++++++++++++++++++++----------

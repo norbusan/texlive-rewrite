@@ -1,7 +1,7 @@
-From d0dd847cbfe2f6fbd66c62c77ef4760bb50c97c5 Mon Sep 17 00:00:00 2001
+From f6892aa9a93569327e1a9fc2494186a44bcb7382 Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Fri, 25 Mar 2016 16:47:23 +0900
-Subject: [PATCH 33/33] switch consistently to sha512 for all checksums, sign
+Subject: [PATCH 33/39] switch consistently to sha512 for all checksums, sign
  installer and iso etc
 
 ---
@@ -14,7 +14,7 @@ Subject: [PATCH 33/33] switch consistently to sha512 for all checksums, sign
  6 files changed, 36 insertions(+), 14 deletions(-)
 
 diff --git a/Master/tlpkg/TeXLive/TLConfig.pm b/Master/tlpkg/TeXLive/TLConfig.pm
-index 1d3cd19..9c210be 100644
+index 1242ce9..27bafd4 100644
 --- a/Master/tlpkg/TeXLive/TLConfig.pm
 +++ b/Master/tlpkg/TeXLive/TLConfig.pm
 @@ -52,6 +52,7 @@ BEGIN {
@@ -25,7 +25,7 @@ index 1d3cd19..9c210be 100644
    );
    @EXPORT = @EXPORT_OK;
  }
-@@ -223,6 +224,8 @@ $ChecksumLength = 128;
+@@ -224,6 +225,8 @@ $ChecksumLength = 128;
  # argument
  $ChecksumProgram = "sha512sum";
  
@@ -35,7 +35,7 @@ index 1d3cd19..9c210be 100644
  1;
  
 diff --git a/Master/tlpkg/TeXLive/TLUtils.pm b/Master/tlpkg/TeXLive/TLUtils.pm
-index 67709a1..4b17641 100644
+index 115b98c..72c01ef 100644
 --- a/Master/tlpkg/TeXLive/TLUtils.pm
 +++ b/Master/tlpkg/TeXLive/TLUtils.pm
 @@ -3747,8 +3747,8 @@ sub download_to_temp_or_file {
@@ -76,7 +76,7 @@ index e4a5677..f06075a 100755
    } else {
      tlwarn("chdir($opt_location/tlpkg/) for md5/checksum creation failed\n: $?");
 diff --git a/Master/tlpkg/bin/tl-update-images b/Master/tlpkg/bin/tl-update-images
-index 6e4521c..b96246b 100755
+index 6e3c8f3..46e18d0 100755
 --- a/Master/tlpkg/bin/tl-update-images
 +++ b/Master/tlpkg/bin/tl-update-images
 @@ -76,7 +76,7 @@ MAKEINST ()

@@ -1,14 +1,14 @@
-From 52b5af93cf3f5cf53661a7ea8222206fac947f97 Mon Sep 17 00:00:00 2001
+From 7880f770439e4d9faab3df8bce4ba62831a028d9 Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Mon, 4 Jan 2016 08:32:33 +0900
-Subject: [PATCH 05/33] starting work on tlmgr/gpg
+Subject: [PATCH 05/39] starting work on tlmgr/gpg
 
 ---
  Master/texmf-dist/scripts/texlive/tlmgr.pl | 7 +++++++
  1 file changed, 7 insertions(+)
 
 diff --git a/Master/texmf-dist/scripts/texlive/tlmgr.pl b/Master/texmf-dist/scripts/texlive/tlmgr.pl
-index 54a1296..990463e 100755
+index 7610362..ebd9fda 100755
 --- a/Master/texmf-dist/scripts/texlive/tlmgr.pl
 +++ b/Master/texmf-dist/scripts/texlive/tlmgr.pl
 @@ -96,6 +96,7 @@ use TeXLive::TLUtils;
@@ -19,7 +19,7 @@ index 54a1296..990463e 100755
  TeXLive::TLUtils->import(qw(member info give_ctan_mirror win32 dirname
                              mkdirhier copy log debug tlcmp));
  use TeXLive::TLPaper;
-@@ -5872,6 +5873,12 @@ END_NO_INTERNET
+@@ -5883,6 +5884,12 @@ END_NO_INTERNET
      }
    }
    if (!$local_copy_tlpdb_used) {

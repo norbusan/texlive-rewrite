@@ -1,7 +1,7 @@
-From 646195c0ab1238698bb2bad2202e6c1b95cf4c3d Mon Sep 17 00:00:00 2001
+From 2fe10b987c45c2f4d941bee653959999c294306c Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Sun, 21 Feb 2016 00:08:55 +0900
-Subject: [PATCH 13/33] work on gpg verification function
+Subject: [PATCH 13/39] work on gpg verification function
 
 ---
  Master/tlpkg/TeXLive/TLPDB.pm   |  5 ++++
@@ -9,7 +9,7 @@ Subject: [PATCH 13/33] work on gpg verification function
  2 files changed, 70 insertions(+), 1 deletion(-)
 
 diff --git a/Master/tlpkg/TeXLive/TLPDB.pm b/Master/tlpkg/TeXLive/TLPDB.pm
-index fa4c096..2ddc7cd 100644
+index b625fc7..3bb5801 100644
 --- a/Master/tlpkg/TeXLive/TLPDB.pm
 +++ b/Master/tlpkg/TeXLive/TLPDB.pm
 @@ -341,6 +341,11 @@ sub from_file {
@@ -25,7 +25,7 @@ index fa4c096..2ddc7cd 100644
            debug("found the uncompressed xz file\n");
          }
 diff --git a/Master/tlpkg/TeXLive/TLUtils.pm b/Master/tlpkg/TeXLive/TLUtils.pm
-index 2a2564d..fc542e0 100644
+index e5da10d..bd91a62 100644
 --- a/Master/tlpkg/TeXLive/TLUtils.pm
 +++ b/Master/tlpkg/TeXLive/TLUtils.pm
 @@ -101,6 +101,7 @@ C<TeXLive::TLUtils> -- utilities used in TeX Live infrastructure

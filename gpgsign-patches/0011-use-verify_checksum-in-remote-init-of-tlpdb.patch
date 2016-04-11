@@ -1,17 +1,17 @@
-From f81b0eb3e032d5792c04a760d2b88472ddadd9bb Mon Sep 17 00:00:00 2001
+From e7e09b36b19ef4dbd5ae62fec793a9a20cf65831 Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Sat, 20 Feb 2016 23:38:20 +0900
-Subject: [PATCH 11/33] use verify_checksum in remote init of tlpdb
+Subject: [PATCH 11/39] use verify_checksum in remote init of tlpdb
 
 ---
  Master/texmf-dist/scripts/texlive/tlmgr.pl | 33 +++++++++++++-----------------
  1 file changed, 14 insertions(+), 19 deletions(-)
 
 diff --git a/Master/texmf-dist/scripts/texlive/tlmgr.pl b/Master/texmf-dist/scripts/texlive/tlmgr.pl
-index 3144bd9..74d3c8b 100755
+index bf384cf..9017c82 100755
 --- a/Master/texmf-dist/scripts/texlive/tlmgr.pl
 +++ b/Master/texmf-dist/scripts/texlive/tlmgr.pl
-@@ -5840,10 +5840,11 @@ sub setup_one_remotetlpdb {
+@@ -5851,10 +5851,11 @@ sub setup_one_remotetlpdb {
        # check for the remote hash
        my $path = "$location/$InfraLocation/$DatabaseName.checksum";
        ddebug("remote path of digest = $path\n");
@@ -27,7 +27,7 @@ index 3144bd9..74d3c8b 100755
  No connection to the internet.
  Unable to download the checksum of the remote TeX Live database,
  but found a local copy so using that.
-@@ -5856,29 +5857,23 @@ http://tug.org/texlive/doc/install-tl.html
+@@ -5867,29 +5868,23 @@ http://tug.org/texlive/doc/install-tl.html
  END_NO_INTERNET
          # above text duplicated in install-tl
  

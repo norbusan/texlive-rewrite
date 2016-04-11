@@ -1,7 +1,7 @@
-From e4e704bcdf703e0a26fc50152fc359f6269749de Mon Sep 17 00:00:00 2001
+From c4fa9de87a5ab3a79138e681ff66d232906a2269 Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Thu, 14 Jan 2016 18:59:16 +0900
-Subject: [PATCH 08/33] introduce ChecksumProgram to compute the checksum
+Subject: [PATCH 08/39] introduce ChecksumProgram to compute the checksum
 
 ---
  Master/tlpkg/TeXLive/TLConfig.pm      |  6 ++++++
@@ -9,7 +9,7 @@ Subject: [PATCH 08/33] introduce ChecksumProgram to compute the checksum
  2 files changed, 11 insertions(+), 5 deletions(-)
 
 diff --git a/Master/tlpkg/TeXLive/TLConfig.pm b/Master/tlpkg/TeXLive/TLConfig.pm
-index 36850d4..1d3cd19 100644
+index d2dba83..1242ce9 100644
 --- a/Master/tlpkg/TeXLive/TLConfig.pm
 +++ b/Master/tlpkg/TeXLive/TLConfig.pm
 @@ -51,6 +51,7 @@ BEGIN {
@@ -20,7 +20,7 @@ index 36850d4..1d3cd19 100644
    );
    @EXPORT = @EXPORT_OK;
  }
-@@ -218,6 +219,11 @@ our $F_NOPOSTACTION = 4;
+@@ -219,6 +220,11 @@ our $F_NOPOSTACTION = 4;
  # method used in TLUtils::tlchecksum and TLUtils::tldigest
  $ChecksumLength = 128;
  

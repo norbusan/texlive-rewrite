@@ -1,7 +1,7 @@
-From d72dbf8a54bcd6ee897db97d673bd8efd4aa634f Mon Sep 17 00:00:00 2001
+From 6ad9e4e0b769d3a2b665e15f4729735be8ad32a3 Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Sat, 19 Mar 2016 11:53:32 +0900
-Subject: [PATCH 29/33] update sec document
+Subject: [PATCH 29/39] update sec document
 
 ---
  Master/tlpkg/doc/tl-security-proposal.txt | 149 ++++++++++++++++++++++--------

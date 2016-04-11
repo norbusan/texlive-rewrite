@@ -1,0 +1,129 @@
+From 8d5fd29a66ca4c5fbafd86aa79dab8271bc158dd Mon Sep 17 00:00:00 2001
+From: Norbert Preining <norbert@preining.info>
+Date: Sun, 10 Apr 2016 10:42:07 +0900
+Subject: [PATCH 38/39] get rid of verify_download, fix verifications
+
+---
+ Master/texmf-dist/scripts/texlive/tlmgr.pl |  1 -
+ Master/tlpkg/TeXLive/TLPDB.pm              |  2 +-
+ Master/tlpkg/TeXLive/TLUtils.pm            | 34 ++----------------------------
+ Master/tlpkg/doc/tl-security-proposal.txt  |  6 ------
+ 4 files changed, 3 insertions(+), 40 deletions(-)
+
+diff --git a/Master/texmf-dist/scripts/texlive/tlmgr.pl b/Master/texmf-dist/scripts/texlive/tlmgr.pl
+index 4458f28..320d857 100755
+--- a/Master/texmf-dist/scripts/texlive/tlmgr.pl
++++ b/Master/texmf-dist/scripts/texlive/tlmgr.pl
+@@ -5879,7 +5879,6 @@ END_NO_INTERNET
+       } elsif ($ret > 0) {
+         # no problem, checksum is wrong, we need to get new tlpdb
+       } else {
+-        debug("checksum of local copy identical with remote hash\n");
+         $remotetlpdb = TeXLive::TLPDB->new(root => $location,
+           tlpdbfile => $loc_copy_of_remote_tlpdb);
+         $local_copy_tlpdb_used = 1;
+diff --git a/Master/tlpkg/TeXLive/TLPDB.pm b/Master/tlpkg/TeXLive/TLPDB.pm
+index 658eafd..ace5984 100644
+--- a/Master/tlpkg/TeXLive/TLPDB.pm
++++ b/Master/tlpkg/TeXLive/TLPDB.pm
+@@ -362,7 +362,7 @@ sub from_file {
+     # cases the result, i.e., the unpackaged tlpdb, is in $tlpdbfile
+     #
+     # before we open and proceed, verify the downloaded file
+-    my ($r, $m) = TeXLive::TLUtils::verify_download($tlpdbfile, $path);
++    my ($r, $m) = TeXLive::TLUtils::verify_checksum($tlpdbfile, $path);
+     if ($r != 0) {
+       tldie("$0: verification of $tlpdbfile from $path failed ($r): $m\n");
+     }
+diff --git a/Master/tlpkg/TeXLive/TLUtils.pm b/Master/tlpkg/TeXLive/TLUtils.pm
+index 9d901cf..6d02404 100644
+--- a/Master/tlpkg/TeXLive/TLUtils.pm
++++ b/Master/tlpkg/TeXLive/TLUtils.pm
+@@ -103,7 +103,6 @@ C<TeXLive::TLUtils> -- utilities used in TeX Live infrastructure
+   TeXLive::TLUtils::setup_gpg();
+   TeXLive::TLUtils::verify_checksum($file, $url);
+   TeXLive::TLUtils::verify_signature($file, $url);
+-  TeXLive::TLUtils::verify_download($file, $url);
+   TeXLive::TLUtils::compare_tlpobjs($tlpA, $tlpB);
+   TeXLive::TLUtils::compare_tlpdbs($tlpdbA, $tlpdbB);
+   TeXLive::TLUtils::report_tlpdb_differences(\%ret);
+@@ -182,7 +181,6 @@ BEGIN {
+     &setup_gpg
+     &verify_checksum
+     &verify_signature
+-    &verify_download
+     &wsystem
+     &xsystem
+     &run_cmd
+@@ -3764,14 +3762,14 @@ In case of errors returns an informal message as second argument.
+ 
+ sub verify_signature {
+   my ($file, $url) = @_;
+-  my $signature_url = "$file.asc";
++  my $signature_url = "$url.asc";
+ 
+   # if we have $::gpg set, we try to verify cryptographic signatures
+   if ($::gpg) {
+     my $signature_file = download_to_temp_or_file($signature_url);
+     if ($signature_file) {
+       if (TeXLive::TLUtils::gpg_verify_signature($file, $signature_file)) {
+-        info("cryptographic signature of $file verified\n");
++        info("cryptographic signature of $url verified\n");
+       } else {
+         return(1, <<GPGERROR);
+ cryptograpic verification of
+@@ -3790,34 +3788,6 @@ GPGERROR
+   return (0);
+ }
+ 
+-=pod
+-
+-=item C<< verify_download($file, $url) >>
+-
+-Verifies a download of C<$url> into C<$file> by checking C<$url.sha512>
+-and if gpg is available, verifying that with C<$url.sha512.asc>.
+-
+-Returns 0 on success, -1 on connection error, 1 on checksum error.
+-In case of errors returns an informal message as second argument.
+-
+-=cut
+-
+-sub verify_download {
+-  my ($file, $url) = @_;
+-  # download checksum file
+-  my $checksum_url = "$url.$TeXLive::TLConfig::ChecksumExtension";
+-
+-  my $checksum_file = download_to_temp_or_file($checksum_url);
+-  if (!$checksum_file) {
+-    # we do not accept if not even a checksum file is present, error out
+-    return(-1, "download did not succeed: $checksum_url");
+-  }
+-
+-  # verify the checksum
+-  # this also does gpg signature check
+-  return verify_checksum($file, $checksum_file);
+-}
+-
+ sub gpg_verify_signature {
+   my ($file, $sig) = @_;
+   my ($file_quote, $sig_quote);
+diff --git a/Master/tlpkg/doc/tl-security-proposal.txt b/Master/tlpkg/doc/tl-security-proposal.txt
+index 6d88d57..b2d4a65 100644
+--- a/Master/tlpkg/doc/tl-security-proposal.txt
++++ b/Master/tlpkg/doc/tl-security-proposal.txt
+@@ -34,12 +34,6 @@ TODO
+   texlive.keys should be treated with special priority and updated
+   before anything else (?)
+ 
+-* TODO
+-	if downloaded texlive.tlpdb checksum agrees with remote
+-	checksum, then we do NOT verify signature by now
+-	This needs to be changed!
+-
+-
+ Definitions:
+ * checksum: defined via tl_checksum, currently is sha512
+ * short checksum: defined via tl_short_digest, currently md5
+-- 
+2.8.0.rc3
+

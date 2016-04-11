@@ -1,7 +1,7 @@
-From 385bde731ee90b2fb2a5aaeccec7f69a92bbe049 Mon Sep 17 00:00:00 2001
+From a3dd864b98e6050160897755efbf39ec2c885f35 Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Sun, 20 Mar 2016 12:05:28 +0900
-Subject: [PATCH 32/33] add signatures of kb and np
+Subject: [PATCH 32/39] add signatures of kb and np
 
 ---
  Master/tlpkg/gpg/pubring.gpg | Bin 2070 -> 3521 bytes

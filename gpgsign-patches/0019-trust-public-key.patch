@@ -1,7 +1,7 @@
-From ba8e7b9ba001204c1b7a8741963ee2a1a4c8fecb Mon Sep 17 00:00:00 2001
+From ae4ed85190ac96bdf3597ca4f17ce40f362c6ba0 Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Mon, 7 Mar 2016 17:29:18 +0900
-Subject: [PATCH 19/33] trust public key
+Subject: [PATCH 19/39] trust public key
 
 ---
  Master/tlpkg/gpg/trustdb.gpg | Bin 1200 -> 1280 bytes

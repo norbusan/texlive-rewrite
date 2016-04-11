@@ -1,7 +1,7 @@
-From 2bb39f1b356dda07634c62c7be34a3eff0fbd1db Mon Sep 17 00:00:00 2001
+From 2c475ec2e5ff8e3570d90919ea9ef111f0f0a7b6 Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Sat, 19 Mar 2016 11:54:20 +0900
-Subject: [PATCH 30/33] update gpg directory with current key
+Subject: [PATCH 30/39] update gpg directory with current key
 
 ---
  Master/tlpkg/gpg/pubring.gpg | Bin 1206 -> 2070 bytes

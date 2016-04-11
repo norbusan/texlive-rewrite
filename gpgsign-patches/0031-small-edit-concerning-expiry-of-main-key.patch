@@ -1,7 +1,7 @@
-From c2dc54da834dd42cd1bd7b37910b3d104f574165 Mon Sep 17 00:00:00 2001
+From 06d6d8ac63852b9174a320181444b50e2096f853 Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Sat, 19 Mar 2016 13:39:12 +0900
-Subject: [PATCH 31/33] small edit concerning expiry of main key
+Subject: [PATCH 31/39] small edit concerning expiry of main key
 
 ---
  Master/tlpkg/doc/tl-security-proposal.txt | 2 --

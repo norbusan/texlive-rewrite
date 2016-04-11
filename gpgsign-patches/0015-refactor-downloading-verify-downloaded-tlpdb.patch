@@ -1,7 +1,7 @@
-From 28ac3db80d93108fd0a79602b8ad938d917cc85b Mon Sep 17 00:00:00 2001
+From 3e733e85a1180ed104185fefac7e728a3c6e0d56 Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Mon, 7 Mar 2016 11:24:57 +0900
-Subject: [PATCH 15/33] refactor downloading, verify downloaded tlpdb
+Subject: [PATCH 15/39] refactor downloading, verify downloaded tlpdb
 
 ---
  Master/tlpkg/TeXLive/TLPDB.pm   | 57 ++++++++++++++++++++++-------------------
@@ -9,7 +9,7 @@ Subject: [PATCH 15/33] refactor downloading, verify downloaded tlpdb
  2 files changed, 31 insertions(+), 34 deletions(-)
 
 diff --git a/Master/tlpkg/TeXLive/TLPDB.pm b/Master/tlpkg/TeXLive/TLPDB.pm
-index 2ddc7cd..0b56723 100644
+index 3bb5801..8eb4411 100644
 --- a/Master/tlpkg/TeXLive/TLPDB.pm
 +++ b/Master/tlpkg/TeXLive/TLPDB.pm
 @@ -299,31 +299,30 @@ sub from_file {
@@ -105,7 +105,7 @@ index 2ddc7cd..0b56723 100644
      open(TMP, "<$path") || die "$0: open($path) failed: $!";
      $retfh = \*TMP;
 diff --git a/Master/tlpkg/TeXLive/TLUtils.pm b/Master/tlpkg/TeXLive/TLUtils.pm
-index 5753f83..93b27c6 100644
+index 8831b88..b36484b 100644
 --- a/Master/tlpkg/TeXLive/TLUtils.pm
 +++ b/Master/tlpkg/TeXLive/TLUtils.pm
 @@ -3702,16 +3702,10 @@ Returns 1 on success, and a pair of 0 and a warning otherwise.

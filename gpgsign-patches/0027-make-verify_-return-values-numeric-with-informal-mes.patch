@@ -1,7 +1,7 @@
-From 30f8c44818acc48325f0f217cb91847f39dbbc01 Mon Sep 17 00:00:00 2001
+From 0b736d83af4121b7fe58e6de55431f1cc96d9d0d Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Sat, 19 Mar 2016 09:48:49 +0900
-Subject: [PATCH 27/33] make verify_* return values numeric with informal
+Subject: [PATCH 27/39] make verify_* return values numeric with informal
  messages
 
 ---
@@ -11,10 +11,10 @@ Subject: [PATCH 27/33] make verify_* return values numeric with informal
  3 files changed, 35 insertions(+), 24 deletions(-)
 
 diff --git a/Master/texmf-dist/scripts/texlive/tlmgr.pl b/Master/texmf-dist/scripts/texlive/tlmgr.pl
-index 99e1711..059401d 100755
+index c1b3db1..5779e79 100755
 --- a/Master/texmf-dist/scripts/texlive/tlmgr.pl
 +++ b/Master/texmf-dist/scripts/texlive/tlmgr.pl
-@@ -5849,9 +5849,8 @@ sub setup_one_remotetlpdb {
+@@ -5860,9 +5860,8 @@ sub setup_one_remotetlpdb {
        ddebug("remote path of digest = $path\n");
  
        my ($ret, $msg) = TeXLive::TLUtils::verify_checksum($loc_copy_of_remote_tlpdb, "$path.checksum");
@@ -26,7 +26,7 @@ index 99e1711..059401d 100755
  No connection to the internet.
  Unable to download the checksum of the remote TeX Live database,
  but found a local copy so using that.
-@@ -5863,15 +5862,11 @@ http://tug.org/texlive/doc/install-tl.html
+@@ -5874,15 +5873,11 @@ http://tug.org/texlive/doc/install-tl.html
  
  END_NO_INTERNET
          # above text duplicated in install-tl
@@ -48,7 +48,7 @@ index 99e1711..059401d 100755
          debug("checksum of local copy identical with remote hash\n");
          $remotetlpdb = TeXLive::TLPDB->new(root => $location,
 diff --git a/Master/tlpkg/TeXLive/TLPDB.pm b/Master/tlpkg/TeXLive/TLPDB.pm
-index 8dc0044..e30a7c8 100644
+index edbabc1..658eafd 100644
 --- a/Master/tlpkg/TeXLive/TLPDB.pm
 +++ b/Master/tlpkg/TeXLive/TLPDB.pm
 @@ -363,7 +363,7 @@ sub from_file {
@@ -61,7 +61,7 @@ index 8dc0044..e30a7c8 100644
      }
      open($retfh, "<$tlpdbfile") || die "$0: open($tlpdbfile) failed: $!";
 diff --git a/Master/tlpkg/TeXLive/TLUtils.pm b/Master/tlpkg/TeXLive/TLUtils.pm
-index b162b09..67709a1 100644
+index dcc3309..115b98c 100644
 --- a/Master/tlpkg/TeXLive/TLUtils.pm
 +++ b/Master/tlpkg/TeXLive/TLUtils.pm
 @@ -3676,9 +3676,10 @@ sub slurp_file {

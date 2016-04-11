@@ -1,0 +1,138 @@
+From 3d12877a865b100225765c8dd50cd00ce63feadc Mon Sep 17 00:00:00 2001
+From: Norbert Preining <norbert@preining.info>
+Date: Sun, 10 Apr 2016 10:24:37 +0900
+Subject: [PATCH 37/39] TLUtils: verify_* reshuffling
+
+separate out verify_signature
+verify_download calls verify_checksum
+verify_checksum calls verify_signature
+---
+ Master/tlpkg/TeXLive/TLUtils.pm | 63 +++++++++++++++++++++++++++--------------
+ 1 file changed, 42 insertions(+), 21 deletions(-)
+
+diff --git a/Master/tlpkg/TeXLive/TLUtils.pm b/Master/tlpkg/TeXLive/TLUtils.pm
+index 72c01ef..9d901cf 100644
+--- a/Master/tlpkg/TeXLive/TLUtils.pm
++++ b/Master/tlpkg/TeXLive/TLUtils.pm
+@@ -102,6 +102,7 @@ C<TeXLive::TLUtils> -- utilities used in TeX Live infrastructure
+   TeXLive::TLUtils::tlchecksum($path);
+   TeXLive::TLUtils::setup_gpg();
+   TeXLive::TLUtils::verify_checksum($file, $url);
++  TeXLive::TLUtils::verify_signature($file, $url);
+   TeXLive::TLUtils::verify_download($file, $url);
+   TeXLive::TLUtils::compare_tlpobjs($tlpA, $tlpB);
+   TeXLive::TLUtils::compare_tlpdbs($tlpdbA, $tlpdbB);
+@@ -180,6 +181,7 @@ BEGIN {
+     &tlchecksum
+     &setup_gpg
+     &verify_checksum
++    &verify_signature
+     &verify_download
+     &wsystem
+     &xsystem
+@@ -3691,6 +3693,11 @@ sub verify_checksum {
+   if (!$checksum_file) {
+     return(-1, "download did not succeed: $checksum_url");
+   }
++  # check the signature
++  my ($ret, $msg) = verify_signature($checksum_file, $checksum_url);
++  return ($ret, $msg) if ($ret != 0);
++
++  # verify local data
+   open $cs_fh, "<$checksum_file" or die("cannot read file: $!");
+   if (read ($cs_fh, $remote_digest, $ChecksumLength) != $ChecksumLength) {
+     close($cs_fh);
+@@ -3745,55 +3752,69 @@ sub download_to_temp_or_file {
+ 
+ =pod
+ 
+-=item C<< verify_download($file, $url) >>
++=item C<< verify_signature($file, $url) >>
+ 
+-Verifies a download of C<$url> into C<$file> by checking C<$url.sha512>
+-and if gpg is available, verifying that with C<$url.sha512.asc>.
++Verifies a download of C<$url> into C<$file> by cheking the 
++gpg signature in C<$url.asc>.
+ 
+ Returns 0 on success, -1 on connection error, 1 on checksum error.
+ In case of errors returns an informal message as second argument.
+ 
+ =cut
+ 
+-sub verify_download {
++sub verify_signature {
+   my ($file, $url) = @_;
+-  # download checksum file
+-  my $checksum_url = "$url.$TeXLive::TLConfig::ChecksumExtension";
+-  my $signature_url = "$checksum_url.asc";
+-
+-  my $checksum_file = download_to_temp_or_file($checksum_url);
+-  if (!$checksum_file) {
+-    # we do not accept if not even a checksum file is present, error out
+-    return(-1, "download did not succeed: $checksum_url");
+-  }
++  my $signature_url = "$file.asc";
+ 
+   # if we have $::gpg set, we try to verify cryptographic signatures
+   if ($::gpg) {
+     my $signature_file = download_to_temp_or_file($signature_url);
+     if ($signature_file) {
+-      if (TeXLive::TLUtils::gpg_verify_signature($checksum_file, $signature_file)) {
+-        info("cryptographic signature of $checksum_url verified\n");
++      if (TeXLive::TLUtils::gpg_verify_signature($file, $signature_file)) {
++        info("cryptographic signature of $file verified\n");
+       } else {
+         return(1, <<GPGERROR);
+ cryptograpic verification of
+-  $checksum_url
++  $file
+ against
+   $signature_url
+ failed. Please report to texlive\@tug.org
+ GPGERROR
+       }
+     } else {
+-      debug("no access to cryptographic signature $urlgpg\n");
++      debug("no access to cryptographic signature $signature_url\n");
+     }
+   } else {
+     debug("gpg prog not defined, no checking of signatures\n");
+   }
++  return (0);
++}
+ 
+-  # if we are still here, then either verification was successful,
+-  # or no gpg or signature found
++=pod
+ 
+-  # next step is verification of tlpdb checksum with checksum file
+-  # existenc of checksum_file was checked above
++=item C<< verify_download($file, $url) >>
++
++Verifies a download of C<$url> into C<$file> by checking C<$url.sha512>
++and if gpg is available, verifying that with C<$url.sha512.asc>.
++
++Returns 0 on success, -1 on connection error, 1 on checksum error.
++In case of errors returns an informal message as second argument.
++
++=cut
++
++sub verify_download {
++  my ($file, $url) = @_;
++  # download checksum file
++  my $checksum_url = "$url.$TeXLive::TLConfig::ChecksumExtension";
++
++  my $checksum_file = download_to_temp_or_file($checksum_url);
++  if (!$checksum_file) {
++    # we do not accept if not even a checksum file is present, error out
++    return(-1, "download did not succeed: $checksum_url");
++  }
++
++  # verify the checksum
++  # this also does gpg signature check
+   return verify_checksum($file, $checksum_file);
+ }
+ 
+-- 
+2.8.0.rc3
+

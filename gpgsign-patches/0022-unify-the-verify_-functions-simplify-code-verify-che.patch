@@ -1,7 +1,7 @@
-From fc796c0ce014d44aeddadea21238ee6916d1ecbe Mon Sep 17 00:00:00 2001
+From 53b90ac60fc67105980a1cb9e3ef9ce5ef0f86d3 Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Mon, 7 Mar 2016 18:16:12 +0900
-Subject: [PATCH 22/33] unify the verify_* functions, simplify code, verify
+Subject: [PATCH 22/39] unify the verify_* functions, simplify code, verify
  checksum file
 
 ---
@@ -9,7 +9,7 @@ Subject: [PATCH 22/33] unify the verify_* functions, simplify code, verify
  1 file changed, 78 insertions(+), 87 deletions(-)
 
 diff --git a/Master/tlpkg/TeXLive/TLUtils.pm b/Master/tlpkg/TeXLive/TLUtils.pm
-index e87204b..c929049 100644
+index 4300bb4..23abd1f 100644
 --- a/Master/tlpkg/TeXLive/TLUtils.pm
 +++ b/Master/tlpkg/TeXLive/TLUtils.pm
 @@ -100,7 +100,6 @@ C<TeXLive::TLUtils> -- utilities used in TeX Live infrastructure

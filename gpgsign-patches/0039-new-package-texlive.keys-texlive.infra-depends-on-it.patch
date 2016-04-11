@@ -1,0 +1,39 @@
+From 0b7d65c8edb23860cc36baae85c6092816920bd5 Mon Sep 17 00:00:00 2001
+From: Norbert Preining <norbert@preining.info>
+Date: Sun, 10 Apr 2016 10:51:10 +0900
+Subject: [PATCH 39/39] new package texlive.keys, texlive.infra depends on it
+
+---
+ Master/tlpkg/tlpsrc/texlive.infra.tlpsrc | 2 ++
+ Master/tlpkg/tlpsrc/texlive.keys.tlpsrc  | 6 ++++++
+ 2 files changed, 8 insertions(+)
+ create mode 100644 Master/tlpkg/tlpsrc/texlive.keys.tlpsrc
+
+diff --git a/Master/tlpkg/tlpsrc/texlive.infra.tlpsrc b/Master/tlpkg/tlpsrc/texlive.infra.tlpsrc
+index 3af07c2..d6743b7 100644
+--- a/Master/tlpkg/tlpsrc/texlive.infra.tlpsrc
++++ b/Master/tlpkg/tlpsrc/texlive.infra.tlpsrc
+@@ -5,6 +5,8 @@ longdesc tools (notably tlmgr) running: perl modules, xz binaries, plus
+ longdesc (sometimes) tar and wget.  These files end up in the standalone
+ longdesc install packages, and in the tlcritical repository.
+ #
++depend texlive.keys
++#
+ docpattern f tlpkg/README
+ docpattern f tlpkg/installer/COPYING.MinGW-runtime.txt
+ docpattern f texmf-dist/scripts/texlive/NEWS
+diff --git a/Master/tlpkg/tlpsrc/texlive.keys.tlpsrc b/Master/tlpkg/tlpsrc/texlive.keys.tlpsrc
+new file mode 100644
+index 0000000..70a55a6
+--- /dev/null
++++ b/Master/tlpkg/tlpsrc/texlive.keys.tlpsrc
+@@ -0,0 +1,6 @@
++category TLCore
++shortdesc TeX Live distribution public key
++longdesc This package contains GnuPG public keys that are used to verify
++longdesc the integrity of downloaded files.
++#
++runpattern d tlpkg/gpg
+-- 
+2.8.0.rc3
+

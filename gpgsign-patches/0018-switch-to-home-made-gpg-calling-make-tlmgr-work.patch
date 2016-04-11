@@ -1,7 +1,7 @@
-From 433bf953ce2e75fd3f60d3d28bd647f72395534e Mon Sep 17 00:00:00 2001
+From a6968b541f9c54e4806ea758619f4f0aea322a09 Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Mon, 7 Mar 2016 17:28:54 +0900
-Subject: [PATCH 18/33] switch to home-made gpg calling, make tlmgr work
+Subject: [PATCH 18/39] switch to home-made gpg calling, make tlmgr work
 
 ---
  Master/texmf-dist/scripts/texlive/tlmgr.pl |   15 +-
@@ -11,7 +11,7 @@ Subject: [PATCH 18/33] switch to home-made gpg calling, make tlmgr work
  delete mode 100644 Master/tlpkg/TeXLive/GPG.pm
 
 diff --git a/Master/texmf-dist/scripts/texlive/tlmgr.pl b/Master/texmf-dist/scripts/texlive/tlmgr.pl
-index 74d3c8b..2f50ee2 100755
+index 9017c82..4089b3d 100755
 --- a/Master/texmf-dist/scripts/texlive/tlmgr.pl
 +++ b/Master/texmf-dist/scripts/texlive/tlmgr.pl
 @@ -96,7 +96,6 @@ use TeXLive::TLUtils;
@@ -37,7 +37,7 @@ index 74d3c8b..2f50ee2 100755
    # the main tree we will be working on
    $::maintree = $Master;
    if ($opts{"usermode"}) {
-@@ -5829,7 +5836,7 @@ sub setup_one_remotetlpdb {
+@@ -5840,7 +5847,7 @@ sub setup_one_remotetlpdb {
    my $local_copy_tlpdb_used = 0;
    if ($location =~ m;^(http|ftp)://;) {
      # first check that the saved tlpdb is present at all
@@ -46,7 +46,7 @@ index 74d3c8b..2f50ee2 100755
      my $loc_copy_of_remote_tlpdb =
        "$Master/$InfraLocation/texlive.tlpdb.$loc_digest";
      ddebug("loc_digest = $loc_digest\n");
-@@ -5843,7 +5850,7 @@ sub setup_one_remotetlpdb {
+@@ -5854,7 +5861,7 @@ sub setup_one_remotetlpdb {
  
        my ($ret, $msg) = TeXLive::TLUtils::verify_checksum($loc_copy_of_remote_tlpdb, $path);
        if (!$ret) {
@@ -55,7 +55,7 @@ index 74d3c8b..2f50ee2 100755
            info(<<END_NO_INTERNET);
  No connection to the internet.
  Unable to download the checksum of the remote TeX Live database,
-@@ -5952,7 +5959,7 @@ FROZEN
+@@ -5963,7 +5970,7 @@ FROZEN
    # make sure that the writeout of the tlpdb is done in UNIX mode
    # since otherwise the checksum will change.
    if (!$local_copy_tlpdb_used && $location =~ m;^(http|ftp)://;) {
@@ -1345,7 +1345,7 @@ index 1e8cb4c..0000000
 -=cut
 -
 diff --git a/Master/tlpkg/TeXLive/TLUtils.pm b/Master/tlpkg/TeXLive/TLUtils.pm
-index af16755..e87204b 100644
+index 689662a..4300bb4 100644
 --- a/Master/tlpkg/TeXLive/TLUtils.pm
 +++ b/Master/tlpkg/TeXLive/TLUtils.pm
 @@ -212,7 +212,6 @@ use Getopt::Long;

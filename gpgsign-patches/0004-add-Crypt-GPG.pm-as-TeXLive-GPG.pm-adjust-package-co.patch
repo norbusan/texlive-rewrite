@@ -1,7 +1,7 @@
-From 4dd4b229cf54171485751506271f4f07b7e963a8 Mon Sep 17 00:00:00 2001
+From 7215b702a21cd70f76395c49b01e2809c8545686 Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Sun, 3 Jan 2016 22:25:00 +0900
-Subject: [PATCH 04/33] add Crypt::GPG.pm as TeXLive::GPG.pm, adjust package
+Subject: [PATCH 04/39] add Crypt::GPG.pm as TeXLive::GPG.pm, adjust package
  code
 
 ---

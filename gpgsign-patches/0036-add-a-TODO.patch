@@ -1,0 +1,36 @@
+From d6cf5317f7b1661bda41049fff58be97c71fcaf7 Mon Sep 17 00:00:00 2001
+From: Norbert Preining <norbert@preining.info>
+Date: Sat, 9 Apr 2016 15:24:56 +0900
+Subject: [PATCH 36/39] add a TODO
+
+---
+ Master/tlpkg/doc/tl-security-proposal.txt | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/Master/tlpkg/doc/tl-security-proposal.txt b/Master/tlpkg/doc/tl-security-proposal.txt
+index 57cefd1..6d88d57 100644
+--- a/Master/tlpkg/doc/tl-security-proposal.txt
++++ b/Master/tlpkg/doc/tl-security-proposal.txt
+@@ -3,6 +3,7 @@ Security Proposal for TeX Live
+ (last change NP 2016-03-19)
+ 
+ Changelog:
++* 20160409
+ * 20160319
+ 	key management, rewrite
+ * 20160307
+@@ -33,6 +34,11 @@ TODO
+   texlive.keys should be treated with special priority and updated
+   before anything else (?)
+ 
++* TODO
++	if downloaded texlive.tlpdb checksum agrees with remote
++	checksum, then we do NOT verify signature by now
++	This needs to be changed!
++
+ 
+ Definitions:
+ * checksum: defined via tl_checksum, currently is sha512
+-- 
+2.8.0.rc3
+

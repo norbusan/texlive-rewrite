@@ -1,0 +1,44 @@
+From 31d47b5962e09c15cd80cfc1a007ec8f3d1c5606 Mon Sep 17 00:00:00 2001
+From: Norbert Preining <norbert@preining.info>
+Date: Sat, 9 Apr 2016 15:19:24 +0900
+Subject: [PATCH 35/39] fixes from live testing
+
+---
+ Master/texmf-dist/scripts/texlive/tlmgr.pl | 4 ++--
+ Master/tlpkg/TeXLive/TLPOBJ.pm             | 3 ++-
+ 2 files changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/Master/texmf-dist/scripts/texlive/tlmgr.pl b/Master/texmf-dist/scripts/texlive/tlmgr.pl
+index 5779e79..4458f28 100755
+--- a/Master/texmf-dist/scripts/texlive/tlmgr.pl
++++ b/Master/texmf-dist/scripts/texlive/tlmgr.pl
+@@ -5856,10 +5856,10 @@ sub setup_one_remotetlpdb {
+       ddebug("loc copy found!\n");
+       # we found the tlpdb matching the current location
+       # check for the remote hash
+-      my $path = "$location/$InfraLocation/$DatabaseName.checksum";
++      my $path = "$location/$InfraLocation/$DatabaseName.$TeXLive::TLConfig::ChecksumExtension";
+       ddebug("remote path of digest = $path\n");
+ 
+-      my ($ret, $msg) = TeXLive::TLUtils::verify_checksum($loc_copy_of_remote_tlpdb, "$path.checksum");
++      my ($ret, $msg) = TeXLive::TLUtils::verify_checksum($loc_copy_of_remote_tlpdb, $path);
+       if ($ret < 0) {
+         info(<<END_NO_INTERNET);
+ No connection to the internet.
+diff --git a/Master/tlpkg/TeXLive/TLPOBJ.pm b/Master/tlpkg/TeXLive/TLPOBJ.pm
+index bbed060..8cb9b6d 100644
+--- a/Master/tlpkg/TeXLive/TLPOBJ.pm
++++ b/Master/tlpkg/TeXLive/TLPOBJ.pm
+@@ -171,7 +171,8 @@ sub from_fh {
+       $self->{$cmd} = $arg;
+     } elsif ($cmd eq 'containerchecksum' || $cmd eq 'srccontainerchecksum'
+         || $cmd eq 'doccontainerchecksum') {
+-      $arg =~ /^[a-f0-9]{$ChecksumLength}$/ or die "Invalid checksum value: $line!";
++      $arg =~ /^[a-f0-9]{$TeXLive::TLConfig::ChecksumLength}$/
++        or die "Invalid checksum value: $line!";
+       $self->{$cmd} = $arg;
+     } elsif ($cmd eq 'name') {
+       $arg =~ /^([-.\w]+)$/ or die("Invalid name: $line!");
+-- 
+2.8.0.rc3
+

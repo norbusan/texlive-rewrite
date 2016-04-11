@@ -1,7 +1,7 @@
-From 9b7e35505e8280e4143e96dd0444ba2c952d4732 Mon Sep 17 00:00:00 2001
+From c771c208957a963b4a4621328cb0f346d349a86c Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Sat, 19 Mar 2016 11:53:10 +0900
-Subject: [PATCH 28/33] tl-update-container: update path and key id
+Subject: [PATCH 28/39] tl-update-container: update path and key id
 
 ---
  Master/tlpkg/bin/tl-update-containers | 6 +++---

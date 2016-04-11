@@ -1,7 +1,7 @@
-From 10b4afebf03e4409fe968467d8ac472769480b9a Mon Sep 17 00:00:00 2001
+From fa599b22c1d0eb4aeeb3c1569a71db53ef699306 Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Sun, 3 Jan 2016 13:52:13 +0900
-Subject: [PATCH 02/33] TLOBJ: support sha256, make_container returns sha256,
+Subject: [PATCH 02/39] TLOBJ: support sha256, make_container returns sha256,
  use that
 
 ---
@@ -10,7 +10,7 @@ Subject: [PATCH 02/33] TLOBJ: support sha256, make_container returns sha256,
  2 files changed, 25 insertions(+), 9 deletions(-)
 
 diff --git a/Master/tlpkg/TeXLive/TLPOBJ.pm b/Master/tlpkg/TeXLive/TLPOBJ.pm
-index 974e232..b22010c 100644
+index b84ab22..0da988c 100644
 --- a/Master/tlpkg/TeXLive/TLPOBJ.pm
 +++ b/Master/tlpkg/TeXLive/TLPOBJ.pm
 @@ -167,7 +167,11 @@ sub from_fh {

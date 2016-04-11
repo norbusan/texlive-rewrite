@@ -1,7 +1,7 @@
-From e0110d07812fc60fa987bba43e8294edcca8e21c Mon Sep 17 00:00:00 2001
+From cd0fc4f941a34d35db5bf9359fe5aef9dbd045f8 Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Mon, 7 Mar 2016 12:41:51 +0900
-Subject: [PATCH 16/33] gpg signature check working
+Subject: [PATCH 16/39] gpg signature check working
 
 ---
  Master/install-tl               |  7 ++++++
@@ -10,10 +10,10 @@ Subject: [PATCH 16/33] gpg signature check working
  3 files changed, 50 insertions(+), 14 deletions(-)
 
 diff --git a/Master/install-tl b/Master/install-tl
-index 121a556..fd6be53 100755
+index e2b445f..48a258e 100755
 --- a/Master/install-tl
 +++ b/Master/install-tl
-@@ -338,6 +338,13 @@ if ($opt_print_arch) {
+@@ -339,6 +339,13 @@ if ($opt_print_arch) {
    exit 0;
  }
  
@@ -28,7 +28,7 @@ index 121a556..fd6be53 100755
  # continuing with normal install
  
 diff --git a/Master/tlpkg/TeXLive/TLPDB.pm b/Master/tlpkg/TeXLive/TLPDB.pm
-index 0b56723..8dc0044 100644
+index 8eb4411..edbabc1 100644
 --- a/Master/tlpkg/TeXLive/TLPDB.pm
 +++ b/Master/tlpkg/TeXLive/TLPDB.pm
 @@ -362,7 +362,10 @@ sub from_file {
@@ -44,7 +44,7 @@ index 0b56723..8dc0044 100644
    } else {
      open(TMP, "<$path") || die "$0: open($path) failed: $!";
 diff --git a/Master/tlpkg/TeXLive/TLUtils.pm b/Master/tlpkg/TeXLive/TLUtils.pm
-index 93b27c6..af16755 100644
+index b36484b..689662a 100644
 --- a/Master/tlpkg/TeXLive/TLUtils.pm
 +++ b/Master/tlpkg/TeXLive/TLUtils.pm
 @@ -212,6 +212,7 @@ use Getopt::Long;

@@ -1,7 +1,7 @@
-From 364594a58fb1aaae7746da063c2a4f628da73e7f Mon Sep 17 00:00:00 2001
+From 4dab7cc63fc9366a10838f37b0f9e0264e81b030 Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Mon, 7 Mar 2016 18:46:36 +0900
-Subject: [PATCH 24/33] reintroduce verify_checksum, single out code, adapt
+Subject: [PATCH 24/39] reintroduce verify_checksum, single out code, adapt
  tlmgr
 
 tlmgr uses verify_checksum to verify the downloaded tlpdb copy
@@ -15,10 +15,10 @@ argument is already the url for the checksum
  2 files changed, 39 insertions(+), 19 deletions(-)
 
 diff --git a/Master/texmf-dist/scripts/texlive/tlmgr.pl b/Master/texmf-dist/scripts/texlive/tlmgr.pl
-index 2f50ee2..99e1711 100755
+index 4089b3d..c1b3db1 100755
 --- a/Master/texmf-dist/scripts/texlive/tlmgr.pl
 +++ b/Master/texmf-dist/scripts/texlive/tlmgr.pl
-@@ -5848,7 +5848,7 @@ sub setup_one_remotetlpdb {
+@@ -5859,7 +5859,7 @@ sub setup_one_remotetlpdb {
        my $path = "$location/$InfraLocation/$DatabaseName.checksum";
        ddebug("remote path of digest = $path\n");
  
@@ -28,7 +28,7 @@ index 2f50ee2..99e1711 100755
          if (($msg eq "file not found") || ($msg eq "read error") || ($msg eq "digest not found")) {
            info(<<END_NO_INTERNET);
 diff --git a/Master/tlpkg/TeXLive/TLUtils.pm b/Master/tlpkg/TeXLive/TLUtils.pm
-index c929049..b255588 100644
+index 23abd1f..715517f 100644
 --- a/Master/tlpkg/TeXLive/TLUtils.pm
 +++ b/Master/tlpkg/TeXLive/TLUtils.pm
 @@ -101,6 +101,7 @@ C<TeXLive::TLUtils> -- utilities used in TeX Live infrastructure

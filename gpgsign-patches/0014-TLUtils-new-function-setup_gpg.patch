@@ -1,14 +1,14 @@
-From 2d794e7967814224f2e51e6ff05f5c24e80f0b0b Mon Sep 17 00:00:00 2001
+From 58bc54d00db263440b4a5eb3d113b8c7be43c9df Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Thu, 25 Feb 2016 16:16:28 +0900
-Subject: [PATCH 14/33] TLUtils: new function: setup_gpg
+Subject: [PATCH 14/39] TLUtils: new function: setup_gpg
 
 ---
  Master/tlpkg/TeXLive/TLUtils.pm | 37 +++++++++++++++++++++++++++++++++----
  1 file changed, 33 insertions(+), 4 deletions(-)
 
 diff --git a/Master/tlpkg/TeXLive/TLUtils.pm b/Master/tlpkg/TeXLive/TLUtils.pm
-index fc542e0..5753f83 100644
+index bd91a62..8831b88 100644
 --- a/Master/tlpkg/TeXLive/TLUtils.pm
 +++ b/Master/tlpkg/TeXLive/TLUtils.pm
 @@ -101,6 +101,7 @@ C<TeXLive::TLUtils> -- utilities used in TeX Live infrastructure

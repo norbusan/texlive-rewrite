@@ -1,0 +1,62 @@
+From 50154012a5959f553d7d581d3438398005dcdbb6 Mon Sep 17 00:00:00 2001
+From: Norbert Preining <norbert@preining.info>
+Date: Sat, 9 Apr 2016 13:58:51 +0900
+Subject: [PATCH 34/39] fix missing access functions for new checksum
+
+---
+ Master/tlpkg/TeXLive/TLPOBJ.pm | 21 ++++++++++++++++++---
+ 1 file changed, 18 insertions(+), 3 deletions(-)
+
+diff --git a/Master/tlpkg/TeXLive/TLPOBJ.pm b/Master/tlpkg/TeXLive/TLPOBJ.pm
+index 365aeed..bbed060 100644
+--- a/Master/tlpkg/TeXLive/TLPOBJ.pm
++++ b/Master/tlpkg/TeXLive/TLPOBJ.pm
+@@ -1,4 +1,4 @@
+-# $Id$
++# $Id: TLPOBJ.pm 40251 2016-04-05 21:18:12Z karl $
+ # TeXLive::TLPOBJ.pm - module for using tlpobj files
+ # Copyright 2007-2016 Norbert Preining
+ # This file is licensed under the GNU General Public License version 2
+@@ -15,7 +15,7 @@ use TeXLive::TLTREE;
+ our $_tmp;
+ my $_containerdir;
+ 
+-my $svnrev = '$Revision$';
++my $svnrev = '$Revision: 40251 $';
+ my $_modulerevision;
+ if ($svnrev =~ m/: ([0-9]+) /) {
+   $_modulerevision = $1;
+@@ -756,7 +756,7 @@ sub update_from_catalogue {
+       $foo =~ s/^.Date: //;
+       # trying to extract the interesting part of a subversion date
+       # keyword expansion here, e.g.,
+-      # $Date$
++      # $Date: 2016-04-06 06:18:12 +0900 (Wed, 06 Apr 2016) $
+       # ->2007-08-15 19:43:35 +0100
+       $foo =~ s/ \(.*\)( *\$ *)$//;  # maybe nothing after parens
+       $self->cataloguedata->{'date'} = $foo;
+@@ -1209,6 +1209,21 @@ sub doccontainermd5 {
+   if (@_) { $self->{'doccontainermd5'} = shift }
+   return ( defined($self->{'doccontainermd5'}) ? $self->{'doccontainermd5'} : "" );
+ }
++sub containerchecksum {
++  my $self = shift;
++  if (@_) { $self->{'containerchecksum'} = shift }
++  return ( defined($self->{'containerchecksum'}) ? $self->{'containerchecksum'} : "" );
++}
++sub srccontainerchecksum {
++  my $self = shift;
++  if (@_) { $self->{'srccontainerchecksum'} = shift }
++  return ( defined($self->{'srccontainerchecksum'}) ? $self->{'srccontainerchecksum'} : "" );
++}
++sub doccontainerchecksum {
++  my $self = shift;
++  if (@_) { $self->{'doccontainerchecksum'} = shift }
++  return ( defined($self->{'doccontainerchecksum'}) ? $self->{'doccontainerchecksum'} : "" );
++}
+ sub srcsize {
+   my $self = shift;
+   if (@_) { $self->{'srcsize'} = shift }
+-- 
+2.8.0.rc3
+

@@ -1,7 +1,7 @@
-From 02d21ef5f576cb7fa0cc17418571565c6c4f3595 Mon Sep 17 00:00:00 2001
+From 837d8ade4b6bc574071c6bd4e0b6b57572073103 Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Sun, 3 Jan 2016 13:36:17 +0900
-Subject: [PATCH 01/33] use sha256 for remote tlpdb and location checks
+Subject: [PATCH 01/39] use sha256 for remote tlpdb and location checks
 
 ---
  Master/texmf-dist/scripts/texlive/tlmgr.pl | 14 +++++++-------
@@ -10,10 +10,10 @@ Subject: [PATCH 01/33] use sha256 for remote tlpdb and location checks
  3 files changed, 26 insertions(+), 8 deletions(-)
 
 diff --git a/Master/texmf-dist/scripts/texlive/tlmgr.pl b/Master/texmf-dist/scripts/texlive/tlmgr.pl
-index 703cbdf..54a1296 100755
+index 9e99cf8..7610362 100755
 --- a/Master/texmf-dist/scripts/texlive/tlmgr.pl
 +++ b/Master/texmf-dist/scripts/texlive/tlmgr.pl
-@@ -2120,7 +2120,7 @@ sub write_w32_updater {
+@@ -2130,7 +2130,7 @@ sub write_w32_updater {
      push (@rst_info, "$pkg ^($oldrev^)");
      next if ($opts{"dry-run"});
      # create backup; make_container expects file name in a format: some-name.r[0-9]+
@@ -22,7 +22,7 @@ index 703cbdf..54a1296 100755
      if ($size <= 0) {
        tlwarn("$prg: Creation of backup container of $pkg failed.\n");
        return 1; # backup failed? abort
-@@ -5828,7 +5828,7 @@ sub setup_one_remotetlpdb {
+@@ -5839,7 +5839,7 @@ sub setup_one_remotetlpdb {
    my $local_copy_tlpdb_used = 0;
    if ($location =~ m;^(http|ftp)://;) {
      # first check that the saved tlpdb is present at all
@@ -31,7 +31,7 @@ index 703cbdf..54a1296 100755
      my $loc_copy_of_remote_tlpdb =
        "$Master/$InfraLocation/texlive.tlpdb.$loc_digest";
      ddebug("loc_digest = $loc_digest\n");
-@@ -5837,11 +5837,11 @@ sub setup_one_remotetlpdb {
+@@ -5848,11 +5848,11 @@ sub setup_one_remotetlpdb {
        ddebug("loc copy found!\n");
        # we found the tlpdb matching the current location
        # check for the remote hash
@@ -45,7 +45,7 @@ index 703cbdf..54a1296 100755
          info(<<END_NO_INTERNET);
  No connection to the internet.
  Unable to download the checksum of the remote TeX Live database,
-@@ -5860,10 +5860,10 @@ END_NO_INTERNET
+@@ -5871,10 +5871,10 @@ END_NO_INTERNET
          $local_copy_tlpdb_used = 1;
        } else {
          ddebug("found remote digest: $rem_digest\n");
@@ -58,7 +58,7 @@ index 703cbdf..54a1296 100755
            $remotetlpdb = TeXLive::TLPDB->new(root => $location,
              tlpdbfile => $loc_copy_of_remote_tlpdb);
            $local_copy_tlpdb_used = 1;
-@@ -5950,7 +5950,7 @@ FROZEN
+@@ -5961,7 +5961,7 @@ FROZEN
    # make sure that the writeout of the tlpdb is done in UNIX mode
    # since otherwise the sha256 will change.
    if (!$local_copy_tlpdb_used && $location =~ m;^(http|ftp)://;) {
@@ -68,7 +68,7 @@ index 703cbdf..54a1296 100755
        "$Master/$InfraLocation/texlive.tlpdb.$loc_digest";
      my $tlfh;
 diff --git a/Master/tlpkg/TeXLive/TLUtils.pm b/Master/tlpkg/TeXLive/TLUtils.pm
-index e1c85f0..ccd4785 100644
+index 8df5c3c..0a9e527 100644
 --- a/Master/tlpkg/TeXLive/TLUtils.pm
 +++ b/Master/tlpkg/TeXLive/TLUtils.pm
 @@ -99,6 +99,7 @@ C<TeXLive::TLUtils> -- utilities used in TeX Live infrastructure

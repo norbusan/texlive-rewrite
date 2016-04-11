@@ -1,14 +1,14 @@
-From 8cce48d43c3b404876b3067e0b4eb4d793474855 Mon Sep 17 00:00:00 2001
+From 3062c75c15d012b5a4aeeaf62b7d867b846e2c43 Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Sat, 20 Feb 2016 22:12:56 +0900
-Subject: [PATCH 09/33] allow for non-failing setup_unix_one
+Subject: [PATCH 09/39] allow for non-failing setup_unix_one
 
 ---
  Master/tlpkg/TeXLive/TLUtils.pm | 12 ++++++++----
  1 file changed, 8 insertions(+), 4 deletions(-)
 
 diff --git a/Master/tlpkg/TeXLive/TLUtils.pm b/Master/tlpkg/TeXLive/TLUtils.pm
-index bfa1fae..216836f 100644
+index 6274e0b..6fafd4e 100644
 --- a/Master/tlpkg/TeXLive/TLUtils.pm
 +++ b/Master/tlpkg/TeXLive/TLUtils.pm
 @@ -2243,7 +2243,7 @@ sub setup_programs {

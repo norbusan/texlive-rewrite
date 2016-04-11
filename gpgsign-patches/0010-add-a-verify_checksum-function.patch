@@ -1,14 +1,14 @@
-From 48260ebfc23f715018173832d62c5c0a21f19028 Mon Sep 17 00:00:00 2001
+From 0ad3fb06107fa3420a6d78892f16f52fac32a78f Mon Sep 17 00:00:00 2001
 From: Norbert Preining <norbert@preining.info>
 Date: Sat, 20 Feb 2016 23:26:38 +0900
-Subject: [PATCH 10/33] add a verify_checksum function
+Subject: [PATCH 10/39] add a verify_checksum function
 
 ---
  Master/tlpkg/TeXLive/TLUtils.pm | 53 +++++++++++++++++++++++++++++++++++++++++
  1 file changed, 53 insertions(+)
 
 diff --git a/Master/tlpkg/TeXLive/TLUtils.pm b/Master/tlpkg/TeXLive/TLUtils.pm
-index 216836f..5ed6c34 100644
+index 6fafd4e..ea19696 100644
 --- a/Master/tlpkg/TeXLive/TLUtils.pm
 +++ b/Master/tlpkg/TeXLive/TLUtils.pm
 @@ -100,6 +100,7 @@ C<TeXLive::TLUtils> -- utilities used in TeX Live infrastructure
